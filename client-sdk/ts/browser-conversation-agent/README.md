@@ -12,17 +12,57 @@ Demo 只从 public npm package 的 `.`、`./spi` 和 `./browser` 三个公共入
 
 ## 本地运行
 
+先安装依赖：
+
 ```bash
 npm ci
+```
 
-# 可选：复制并编辑 .env，让开发服务器启动时读取 AK。
-# 不配置时，页面会在启动会话时要求手工输入。
-cp .env.example .env
+### 页面输入 AK
 
+直接启动开发服务器：
+
+```bash
 npm run dev
 ```
 
-手工输入的 AK 只保存在当前页面内存中，刷新页面后清除。仓库不得提交真实 AK。SDK 不会把 AK 写入事件、错误或消息，但浏览器应用的开发者仍须自行决定最终应用如何管理凭证。
+页面会在启动会话时要求输入 Gateway AK。手工输入的 AK 只保存在当前页面内存中，刷新页面后清除。
+
+### 使用项目 .env
+
+复制示例文件、填写 AK 后启动：
+
+```bash
+cp .env.example .env
+npm run dev
+```
+
+### 使用外部 key 文件
+
+key 文件可以位于仓库外，内容为：
+
+```dotenv
+EVA_GATEWAY_API_KEY=akxxx
+```
+
+从 demo 目录启动，并传入文件路径：
+
+```bash
+npm run dev:key-file -- /absolute/path/to/eva-key.env
+```
+
+`dev:key-file` 会读取所需变量并适配当前 demo，不会复制 key 文件、生成 `.env` 或输出 AK。
+
+### 指定端口
+
+两种命令都可以把 `--port` 传给 Vite：
+
+```bash
+npm run dev -- --port 4173
+npm run dev:key-file -- /absolute/path/to/eva-key.env --port 4173
+```
+
+仓库不得提交真实 AK。SDK 不会把 AK 写入事件、错误或消息，但浏览器应用的开发者仍须自行决定最终应用如何管理凭证。
 
 ## Production build
 
@@ -35,7 +75,7 @@ npm run preview
 
 摄像头默认关闭，页面运行后可手动开启；开启期间持续持有一个 video session，每次 `speech.started` 只采一张图。可以直接说“图片里有什么”验证图片与 ASR 文本共同进入 LLM。
 
-若 build 时提供 `VITE_EVA_API_KEY`，AK 会被 Vite 写入浏览器 bundle。公共静态部署不得设置该变量；应让使用者在运行时输入自己的可轮换、限额 AK。浏览器端凭证对页面使用者始终可观察，这不是凭证保密方案。
+通过 `dev:key-file` 或 build 环境提供 `VITE_EVA_API_KEY` 时，AK 会被 Vite 写入浏览器 bundle。公共静态部署不得注入共享 AK；应让使用者在运行时输入自己的可轮换、限额 AK。浏览器端凭证对页面使用者始终可观察，这不是凭证保密方案。
 
 ## SDK 兼容性
 

@@ -8,11 +8,11 @@
 
 ## 示例目录
 
-| SDK | 语言 | Demo | 说明 |
-|---|---|---|---|
-| Client SDK | TypeScript | [`browser-conversation-agent`](client-sdk/ts/browser-conversation-agent/) | 浏览器端语音、多轮对话、TTS、麦克风控制与可选摄像头图片问答 |
+| SDK | 语言 | SDK 包 / 版本 | Demo | 说明 |
+|---|---|---|---|---|
+| Client SDK | TypeScript | [`@autoark-ai/eva-client-sdk-ts@0.0.3-dev`](https://www.npmjs.com/package/@autoark-ai/eva-client-sdk-ts/v/0.0.3-dev) | [`browser-conversation-agent`](client-sdk/ts/browser-conversation-agent/) | 浏览器端语音、多轮对话、TTS、麦克风控制与可选摄像头图片问答 |
 
-机器可读目录见 [`examples.json`](examples.json)。SDK 兼容版本以每个 demo 自己的 package manifest 和 lockfile 为唯一事实源，根目录不重复维护版本号。
+机器可读目录见 [`examples.json`](examples.json)。表格展示每个 demo 当前使用的精确 SDK 版本，并链接到对应的 package 版本页；版本仍以各 demo 的 package manifest 和 lockfile 为事实源，`verify-catalog.mjs` 会校验表格与 manifest 保持一致。
 
 ## 目录约定
 
@@ -21,12 +21,14 @@
 - 第二级目录使用语言标识，例如 `ts/`、`flutter/`、`python/`。
 - 第三级目录是可独立安装、构建和运行的具体 demo。
 - Demo 只消费公开发布的 SDK，不通过 workspace、源码相对路径或本地 tarball 回连 SDK 仓库。
+- 每个可运行 demo 都应提供只接收文件路径的 key-file 启动入口；demo 通过映射数组声明需要的变量，当前至少包含 `EVA_GATEWAY_API_KEY=<value>`，并在内存中转换为自身运行时需要的环境变量。
 - 不提交 API Key、音频、图片、对话正文或其他用户数据。
 
 ## 本地检查
 
 ```bash
 node scripts/verify-catalog.mjs
+node --test scripts/run-npm-demo-with-key-file.test.mjs
 cd client-sdk/ts/browser-conversation-agent
 npm ci
 npm run build
