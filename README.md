@@ -24,17 +24,14 @@
 - 每个可运行 demo 都应提供只接收文件路径的 key-file 启动入口；demo 通过映射数组声明需要的变量，当前至少包含 `EVA_GATEWAY_API_KEY=<value>`，并在内存中转换为自身运行时需要的环境变量。
 - 不提交 API Key、音频、图片、对话正文或其他用户数据。
 
-## 本地检查
+## 仓库检查
 
 ```bash
 node scripts/verify-catalog.mjs
 node --test scripts/run-npm-demo-with-key-file.test.mjs
-cd client-sdk/ts/browser-conversation-agent
-npm ci
-npm run build
 ```
 
-远程仓库、CI 与静态站点部署会在代码托管地址锁定后补充。
+各 demo 的依赖安装、运行和构建命令见其目录内的 README；根目录不重复维护具体示例的命令。
 
 ## License
 
