@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "examples": [
+    {
+      "id": "client-sdk-ts-browser-conversation-agent",
+      "sdkFamily": "client-sdk",
+      "language": "ts",
+      "platform": "browser",
+      "path": "client-sdk/ts/browser-conversation-agent",
+      "sdk": {
+        "ecosystem": "npm",
+        "package": "@autoark-ai/eva-client-sdk-ts"
+      },
+      "status": "dev"
+    }
+  ]
+}

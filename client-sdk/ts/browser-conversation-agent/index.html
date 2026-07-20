@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" href="data:," />
+    <title>Eva Browser Conversation Agent</title>
+  </head>
+  <body>
+    <main>
+      <header>
+        <p class="eyebrow">@autoark-ai/eva-client-sdk-ts · registry consumer</p>
+        <h1>Eva Browser Conversation Agent</h1>
+        <p>一个可本地运行、可构建为静态站点的最小多轮语音页面。</p>
+      </header>
+
+      <section class="controls" aria-label="会话控制">
+        <button id="start" type="button">启动会话</button>
+        <button id="stop" type="button" disabled>停止</button>
+        <button id="audio-input" type="button">麦克风：开启</button>
+        <button id="tts" type="button">TTS：开启</button>
+        <button id="camera" type="button">摄像头：关闭</button>
+        <span id="status" role="status">未启动</span>
+      </section>
+
+      <form id="text-form">
+        <label for="text">手动文本</label>
+        <div class="row">
+          <input id="text" autocomplete="off" placeholder="例如：图片里有什么？" />
+          <button type="submit" disabled>发送</button>
+        </div>
+      </form>
+
+      <section>
+        <h2>最终消息</h2>
+        <ol id="messages" class="messages"></ol>
+      </section>
+
+      <section class="live-grid">
+        <article><h2>实时转写</h2><p id="transcript">—</p></article>
+        <article><h2>实时回复</h2><p id="reply">—</p></article>
+      </section>
+
+      <section aria-labelledby="activity-log-title">
+        <div class="section-heading">
+          <h2 id="activity-log-title">状态日志</h2>
+          <button id="clear-log" class="secondary-button" type="button">清空</button>
+        </div>
+        <textarea id="activity-log" rows="16" readonly aria-label="页面状态变化日志"></textarea>
+      </section>
+
+      <details>
+        <summary>诊断信息</summary>
+        <dl>
+          <div><dt>麦克风</dt><dd id="microphone">未请求</dd></div>
+          <div><dt>摄像头</dt><dd id="camera-status">默认关闭</dd></div>
+          <div><dt>打断</dt><dd id="interruption">—</dd></div>
+          <div><dt>错误</dt><dd id="error">—</dd></div>
+        </dl>
+        <pre id="latency">暂无 latency</pre>
+      </details>
+    </main>
+
+    <dialog id="api-key-dialog" aria-labelledby="api-key-title">
+      <form id="api-key-form" class="api-key-form" method="dialog">
+        <h2 id="api-key-title">输入 Gateway AK</h2>
+        <p>AK 只保存在当前页面内存中，刷新页面后会清除。</p>
+        <label for="api-key-input">Gateway AK</label>
+        <input
+          id="api-key-input"
+          type="password"
+          autocomplete="off"
+          autocapitalize="none"
+          spellcheck="false"
+        />
+        <p id="api-key-error" class="field-error" role="alert"></p>
+        <div class="dialog-actions">
+          <button id="api-key-cancel" class="secondary-button" type="button">取消</button>
+          <button type="submit">使用此 AK 启动</button>
+        </div>
+      </form>
+    </dialog>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
