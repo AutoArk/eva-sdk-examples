@@ -1,6 +1,6 @@
-# Eva SDK Examples
+# EVA SDK Examples
 
-本仓库集中维护 Eva 各 SDK 的可运行示例。示例按 SDK 产品线、实现语言和具体场景三级组织：
+本仓库集中维护 EVA 各 SDK 的可运行示例。示例按 SDK 产品线、实现语言和具体场景三级组织：
 
 ```text
 <sdk-family>/<language>/<demo>/
@@ -16,8 +16,8 @@
 
 ## 目录约定
 
-- `client-sdk/`：端侧 Eva SDK 示例。
-- `cloud-sdk/`：云端 Eva SDK 示例。
+- `client-sdk/`：端侧 EVA SDK 示例。
+- `cloud-sdk/`：云端 EVA SDK 示例。
 - 第二级目录使用语言标识，例如 `ts/`、`flutter/`、`python/`。
 - 第三级目录是可独立安装、构建和运行的具体 demo。
 - Demo 只消费公开发布的 SDK，不通过 workspace、源码相对路径或本地 tarball 回连 SDK 仓库。

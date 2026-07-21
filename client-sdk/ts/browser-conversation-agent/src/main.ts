@@ -298,7 +298,7 @@ function renderMessages(source: EvaVoiceDialogueAgent): void {
     const item = document.createElement("li");
     item.className = message.role;
     const label = document.createElement("strong");
-    label.textContent = message.role === "user" ? "你" : "Eva";
+    label.textContent = message.role === "user" ? "你" : "EVA";
     const content = document.createElement("span");
     content.textContent = message.content;
     item.append(label, content);

@@ -2,7 +2,7 @@
   "name": "eva-client-sdk-ts-browser-conversation-agent",
   "private": true,
   "version": "0.0.0",
-  "description": "Eva Client SDK TypeScript browser conversation agent demo.",
+  "description": "EVA Client SDK TypeScript browser conversation agent demo.",
   "type": "module",
   "scripts": {
     "dev": "vite --host 0.0.0.0",

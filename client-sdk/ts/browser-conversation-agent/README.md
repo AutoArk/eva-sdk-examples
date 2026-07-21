@@ -1,6 +1,6 @@
-# Eva Client SDK · TypeScript Browser Conversation Agent
+# EVA Client SDK · TypeScript Browser Conversation Agent
 
-这是 Eva Client SDK 的 TypeScript 浏览器 demo，展示多轮语音对话、实时转写、TTS、麦克风控制、文本输入，以及默认关闭的摄像头图片问答。
+这是 EVA Client SDK 的 TypeScript 浏览器 demo，展示多轮语音对话、实时转写、TTS、麦克风控制、文本输入，以及默认关闭的摄像头图片问答。
 
 Demo 只从 public npm package 的 `.`、`./spi` 和 `./browser` 三个公共入口导入，不依赖 SDK 源码、workspace link、internal seam 或本地 tarball。SDK 的创建与启动主路径集中在 `src/sdk-usage.ts`；`src/main.ts` 只负责页面交互、运行时 AK 输入、状态和事件展示。
 
@@ -8,7 +8,7 @@ Demo 只从 public npm package 的 `.`、`./spi` 和 `./browser` 三个公共入
 
 - Node.js `>=20`
 - 支持 Web Audio、麦克风和摄像头权限的现代浏览器
-- 开发者自行管理的 Eva Gateway AK
+- 开发者自行管理的 EVA Gateway AK
 
 ## 本地运行
 

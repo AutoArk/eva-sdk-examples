@@ -23,6 +23,7 @@ const paths = new Set();
 
 for (const example of catalog.examples) {
   assert(typeof example.id === "string" && example.id.length > 0, "example id is required");
+  assert(typeof example.title === "string" && example.title.length > 0, `${example.id}: title is required`);
   assert(!ids.has(example.id), `duplicate example id: ${example.id}`);
   ids.add(example.id);
 

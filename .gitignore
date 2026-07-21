@@ -1,4 +1,7 @@
+# Local environment and OS files
 .DS_Store
 **/.env
+
+# Generated dependencies and build output
 **/dist/
 **/node_modules/

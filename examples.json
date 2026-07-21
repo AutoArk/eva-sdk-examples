@@ -3,6 +3,7 @@
   "examples": [
     {
       "id": "client-sdk-ts-browser-conversation-agent",
+      "title": "EVA Client SDK · TypeScript Browser Conversation Agent",
       "sdkFamily": "client-sdk",
       "language": "ts",
       "platform": "browser",
