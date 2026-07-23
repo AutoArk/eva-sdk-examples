@@ -230,7 +230,8 @@ async function submit(event: SubmitEvent): Promise<void> {
   }
 }
 
-// SDK event → Demo 页面投影；switch 同时展示 AgentEvent 的穷尽消费方式。
+// SDK event → Demo 页面投影。Emotion / Command 配置是可选的，但 AgentEvent
+// 仍表示完整公共事件目录，因此这里保留所有分支并用 never 做穷尽检查。
 function handleEvent(event: AgentEvent, sourceAgent: EvaVoiceDialogueAgent): void {
   switch (event.type) {
     case "speech.started":
@@ -275,6 +276,34 @@ function handleEvent(event: AgentEvent, sourceAgent: EvaVoiceDialogueAgent): voi
     case "turn.latency":
       setText("latency", JSON.stringify(event.latency, null, 2));
       return;
+    case "emotion.detected":
+      setText(
+        "emotion",
+        `${event.emotionCode} · ${event.source} · confidence ${event.confidence?.toFixed(3) ?? "—"} · ${event.latencyMs} ms · 「${event.textPreview}」`,
+        event.type,
+      );
+      return;
+    case "command.called":
+      setText(
+        "command",
+        `调用中 · ${event.call.name} · ${event.call.argumentsJson}`,
+        event.type,
+      );
+      return;
+    case "command.completed":
+      setText(
+        "command",
+        `已完成 · ${event.call.name} · ${event.result.message ?? "成功"}${formatCommandData(event.result.data)}`,
+        event.type,
+      );
+      return;
+    case "command.failed":
+      setText(
+        "command",
+        `失败 · ${event.call.name} · ${event.result.message}${formatCommandData(event.result.data)}`,
+        event.type,
+      );
+      return;
     case "error":
       if (event.error.source === "media" && event.error.role === "camera") {
         if (event.error.operation === "start") {
@@ -289,6 +318,10 @@ function handleEvent(event: AgentEvent, sourceAgent: EvaVoiceDialogueAgent): voi
       event satisfies never;
       return;
   }
+}
+
+function formatCommandData(data: unknown): string {
+  return data === undefined ? "" : ` · ${JSON.stringify(data)}`;
 }
 
 // Demo-only 渲染与日志 helper。
