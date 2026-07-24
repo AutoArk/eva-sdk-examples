@@ -8,58 +8,134 @@
   </head>
   <body>
     <main>
-      <header>
-        <p class="eyebrow">@autoark-ai/eva-client-sdk-ts · registry consumer</p>
-        <h1>EVA Browser Conversation Agent</h1>
-        <p>一个可本地运行、可构建为静态站点的最小多轮语音页面。</p>
+      <header class="app-header">
+        <div class="brand">
+          <span class="brand-mark" aria-hidden="true">E</span>
+          <div>
+            <p class="eyebrow">EVA Voice</p>
+            <h1>语音对话</h1>
+          </div>
+        </div>
+        <p class="sdk-label">@autoark-ai/eva-client-sdk-ts</p>
       </header>
 
-      <section class="controls" aria-label="会话控制">
-        <button id="start" type="button">启动会话</button>
-        <button id="stop" type="button" disabled>停止</button>
-        <button id="audio-input" type="button">麦克风：开启</button>
-        <button id="tts" type="button">TTS：开启</button>
-        <button id="camera" type="button">摄像头：关闭</button>
-        <span id="status" role="status">未启动</span>
+      <section id="voice-stage" class="voice-stage" data-state="idle" aria-labelledby="voice-state">
+        <div class="voice-copy">
+          <p class="stage-kicker">
+            <span class="status-dot" aria-hidden="true"></span>
+            <span id="status" role="status">未启动</span>
+            <span id="call-duration" class="call-duration" hidden>00:00</span>
+          </p>
+          <h2 id="voice-state">准备好聊聊了吗？</h2>
+          <p id="voice-hint">启动后直接开口，EVA 会实时听见并回应你。</p>
+        </div>
+
+        <div class="voice-visual" aria-hidden="true">
+          <div class="waveform">
+            <span></span><span></span><span></span><span></span><span></span>
+            <span></span><span></span><span></span><span></span><span></span>
+            <span></span><span></span><span></span><span></span><span></span>
+            <span></span><span></span><span></span><span></span><span></span>
+            <span></span><span></span><span></span><span></span><span></span>
+          </div>
+        </div>
+
+        <div class="session-actions">
+          <button id="start" class="primary-action" type="button">
+            <span class="mic-icon" aria-hidden="true"></span>
+            开始语音对话
+          </button>
+          <button id="stop" class="stop-action" type="button" disabled hidden>
+            <span class="stop-icon" aria-hidden="true"></span>
+            结束通话
+          </button>
+        </div>
       </section>
 
-      <form id="text-form">
-        <label for="text">手动文本</label>
-        <div class="row">
-          <input id="text" autocomplete="off" placeholder="例如：图片里有什么？" />
-          <button type="submit" disabled>发送</button>
+      <section class="device-bar" aria-label="对话设备">
+        <div>
+          <p class="device-title">对话设备</p>
+          <p class="device-description">会话中也可以随时调整</p>
         </div>
-      </form>
+        <div class="device-controls">
+          <button id="audio-input" class="switch-control" type="button" role="switch" aria-checked="true">
+            <span class="control-icon mic-icon" aria-hidden="true"></span>
+            <span>麦克风</span>
+            <span class="switch-indicator" aria-hidden="true"></span>
+          </button>
+          <button id="tts" class="switch-control" type="button" role="switch" aria-checked="true">
+            <span class="control-icon speaker-icon" aria-hidden="true"></span>
+            <span>语音回复</span>
+            <span class="switch-indicator" aria-hidden="true"></span>
+          </button>
+          <button id="camera" class="switch-control" type="button" role="switch" aria-checked="false">
+            <span class="control-icon camera-icon" aria-hidden="true"></span>
+            <span>摄像头</span>
+            <span class="switch-indicator" aria-hidden="true"></span>
+          </button>
+        </div>
+      </section>
 
-      <section>
-        <h2>最终消息</h2>
+      <section class="conversation" aria-labelledby="conversation-title">
+        <div class="section-heading conversation-heading">
+          <div>
+            <p class="section-kicker">Conversation</p>
+            <h2 id="conversation-title">对话记录</h2>
+          </div>
+          <span class="privacy-note">仅保留在当前会话</span>
+        </div>
         <ol id="messages" class="messages"></ol>
-      </section>
-
-      <section class="live-grid">
-        <article><h2>实时转写</h2><p id="transcript">—</p></article>
-        <article><h2>实时回复</h2><p id="reply">—</p></article>
-      </section>
-
-      <section aria-labelledby="activity-log-title">
-        <div class="section-heading">
-          <h2 id="activity-log-title">状态日志</h2>
-          <button id="clear-log" class="secondary-button" type="button">清空</button>
+        <div id="conversation-empty" class="conversation-empty">
+          <span class="empty-wave" aria-hidden="true"></span>
+          <p>对话开始后，双方内容会显示在这里</p>
         </div>
-        <textarea id="activity-log" rows="16" readonly aria-label="页面状态变化日志"></textarea>
+
+        <div class="live-turn" aria-live="polite">
+          <article>
+            <p class="live-label"><span class="live-dot user-dot"></span>你正在说</p>
+            <p id="transcript">等待语音输入</p>
+          </article>
+          <article>
+            <p class="live-label"><span class="live-dot eva-dot"></span>EVA 正在回应</p>
+            <p id="reply">等待开始对话</p>
+          </article>
+        </div>
+
+        <form id="text-form" class="text-composer">
+          <label class="visually-hidden" for="text">输入文字消息</label>
+          <input id="text" autocomplete="off" placeholder="也可以输入文字消息…" />
+          <button type="submit" aria-label="发送文字消息" disabled>
+            <span class="send-icon" aria-hidden="true"></span>
+          </button>
+        </form>
       </section>
 
-      <details>
-        <summary>诊断信息</summary>
-        <dl>
-          <div><dt>麦克风</dt><dd id="microphone">未请求</dd></div>
-          <div><dt>摄像头</dt><dd id="camera-status">默认关闭</dd></div>
-          <div><dt>打断</dt><dd id="interruption">—</dd></div>
-          <div><dt>情绪</dt><dd id="emotion">—</dd></div>
-          <div><dt>Command</dt><dd id="command">—</dd></div>
-          <div><dt>错误</dt><dd id="error">—</dd></div>
-        </dl>
-        <pre id="latency">暂无 latency</pre>
+      <details class="diagnostics">
+        <summary>
+          <span>开发者诊断</span>
+          <span class="summary-hint">事件、设备与 latency</span>
+        </summary>
+        <div class="diagnostic-content">
+          <section class="diagnostic-panel" aria-labelledby="activity-log-title">
+            <div class="section-heading">
+              <h2 id="activity-log-title">状态日志</h2>
+              <button id="clear-log" class="secondary-button" type="button">清空</button>
+            </div>
+            <textarea id="activity-log" rows="12" readonly aria-label="页面状态变化日志"></textarea>
+          </section>
+          <section class="diagnostic-panel">
+            <h2>运行状态</h2>
+            <dl>
+              <div><dt>麦克风</dt><dd id="microphone">未请求</dd></div>
+              <div><dt>摄像头</dt><dd id="camera-status">默认关闭</dd></div>
+              <div><dt>打断</dt><dd id="interruption">—</dd></div>
+              <div><dt>情绪</dt><dd id="emotion">—</dd></div>
+              <div><dt>Command</dt><dd id="command">—</dd></div>
+              <div><dt>错误</dt><dd id="error">—</dd></div>
+            </dl>
+            <pre id="latency">暂无 latency</pre>
+          </section>
+        </div>
       </details>
     </main>
 
