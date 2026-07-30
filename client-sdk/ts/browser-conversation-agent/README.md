@@ -6,7 +6,7 @@ Demo 只从 public npm package 的 `.`、`./spi` 和 `./browser` 三个公共入
 
 ## 环境要求
 
-- Node.js `>=20`
+- Node.js `>=22`
 - 支持 Web Audio、麦克风和摄像头权限的现代浏览器
 - 开发者自行管理的 EVA Gateway AK
 
