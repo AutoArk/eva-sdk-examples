@@ -106,8 +106,13 @@ export async function startEvaAgent(options: StartEvaAgentOptions): Promise<Star
     aec: createPassthroughAecProcessor(),
     // 默认 browser camera helper 是可替换的 CameraSnapshotSource；factory 不会自行申请权限。
     camera: createBrowserCameraSnapshotSource({
-      video: { facingMode: { ideal: "user" } },
-      mimeType: "image/png",
+      video: {
+        facingMode: { ideal: "user" },
+        width: { ideal: 640 },
+        height: { ideal: 360 },
+      },
+      mimeType: "image/jpeg",
+      jpegQuality: 0.7,
     }),
   };
 
