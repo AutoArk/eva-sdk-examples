@@ -3,6 +3,7 @@ import test from "node:test";
 
 import {
   createNpmDevArgs,
+  createNpmInvocation,
   createRuntimeEnvironment,
   keyMappings,
   parseKeyFile,
@@ -16,6 +17,45 @@ test("forwards custom Vite options after npm's argument separator", () => {
     "--port",
     "4173",
   ]);
+});
+
+test("launches npm directly on non-Windows platforms", () => {
+  const npmArgs = createNpmDevArgs(["--port", "4173"]);
+
+  assert.deepEqual(createNpmInvocation(npmArgs, { platform: "linux" }), {
+    command: "npm",
+    args: ["run", "dev", "--", "--port", "4173"],
+  });
+});
+
+test("launches npm's JavaScript CLI through Node on Windows", () => {
+  const npmArgs = createNpmDevArgs(["--port", "4173"]);
+
+  assert.deepEqual(createNpmInvocation(npmArgs, {
+    platform: "win32",
+    nodeExecutable: "C:\\Program Files\\nodejs\\node.exe",
+    npmCliPath: "C:\\Program Files\\nodejs\\node_modules\\npm\\bin\\npm-cli.js",
+  }), {
+    command: "C:\\Program Files\\nodejs\\node.exe",
+    args: [
+      "C:\\Program Files\\nodejs\\node_modules\\npm\\bin\\npm-cli.js",
+      "run",
+      "dev",
+      "--",
+      "--port",
+      "4173",
+    ],
+  });
+});
+
+test("requires npm's JavaScript CLI path for the Windows launcher", () => {
+  assert.throws(
+    () => createNpmInvocation(["run", "dev"], {
+      platform: "win32",
+      npmCliPath: undefined,
+    }),
+    /start this launcher with npm run dev:key-file/,
+  );
 });
 
 test("parses the standard key file without exposing unrelated fields", () => {
