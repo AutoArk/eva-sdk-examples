@@ -15,7 +15,7 @@ await Promise.all([
 
 assert(catalog.schemaVersion === 1, "examples.json schemaVersion must be 1");
 assert(Array.isArray(catalog.examples) && catalog.examples.length > 0, "catalog must contain examples");
-assert(license.startsWith("MIT License\n"), "repository LICENSE must remain MIT");
+assert(/^MIT License\r?\n/.test(license), "repository LICENSE must remain MIT");
 assert(license.includes("Copyright (c) 2026 AutoArk AI"), "repository LICENSE owner drifted");
 
 const ids = new Set();
