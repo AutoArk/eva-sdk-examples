@@ -119,12 +119,12 @@ export async function startEvaAgent(options: StartEvaAgentOptions): Promise<Star
   // apiKey 与三个 model 是应用提供的接入配置；其余字段是本 demo 的选择。
   const agent = createEvaVoiceDialogueAgent({
     apiKey: options.apiKey,
-    asr: { model: "fun_asr", sampleRate: 48_000 },
+    asr: { model: "ark-asr-plus", sampleRate: 16_000 },
     llm: { model: "doubao-seed-2-0-mini-nothink" },
     tts: {
-      model: "cosyvoice_tts",
-      voice: "longjielidou_v3",
-      sampleRate: 48_000,
+      model: "ark-tts-flash",
+      voice: "zh_en_male_evan",
+      sampleRate: 44100,
     },
     vad: {
       sensitivity: 0.7,
