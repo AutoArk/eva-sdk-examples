@@ -6,12 +6,14 @@ on:
       - ".github/workflows/windows-key-file-launcher.yml"
       - "scripts/run-npm-demo-with-key-file.mjs"
       - "scripts/run-npm-demo-with-key-file.test.mjs"
+      - "scripts/verify-catalog.mjs"
       - "client-sdk/ts/browser-conversation-agent/**"
   pull_request:
     paths:
       - ".github/workflows/windows-key-file-launcher.yml"
       - "scripts/run-npm-demo-with-key-file.mjs"
       - "scripts/run-npm-demo-with-key-file.test.mjs"
+      - "scripts/verify-catalog.mjs"
       - "client-sdk/ts/browser-conversation-agent/**"
   workflow_dispatch:
 
