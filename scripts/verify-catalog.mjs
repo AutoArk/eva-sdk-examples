@@ -6,12 +6,7 @@ const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const catalog = JSON.parse(await readFile(join(root, "examples.json"), "utf8"));
 const license = await readFile(join(root, "LICENSE"), "utf8");
 const repositoryReadme = await readFile(join(root, "README.md"), "utf8");
-const npmKeyFileLauncher = "node ../../../scripts/run-npm-demo-with-key-file.mjs";
-
-await Promise.all([
-  access(join(root, "scripts/run-npm-demo-with-key-file.mjs")),
-  access(join(root, "scripts/run-npm-demo-with-key-file.test.mjs")),
-]);
+const npmKeyFileLauncher = "node scripts/run-npm-demo-with-key-file.mjs";
 
 assert(catalog.schemaVersion === 1, "examples.json schemaVersion must be 1");
 assert(Array.isArray(catalog.examples) && catalog.examples.length > 0, "catalog must contain examples");
@@ -30,6 +25,7 @@ for (const example of catalog.examples) {
   for (const field of ["sdkFamily", "language", "platform", "path", "status"]) {
     assert(typeof example[field] === "string" && example[field].length > 0, `${example.id}: ${field} is required`);
   }
+  assert(["dev", "release"].includes(example.status), `${example.id}: status must be dev or release`);
   assert(typeof example.sdk === "object" && example.sdk !== null, `${example.id}: sdk descriptor is required`);
   assert(typeof example.sdk.ecosystem === "string", `${example.id}: sdk ecosystem is required`);
 
@@ -53,6 +49,8 @@ for (const example of catalog.examples) {
   await Promise.all([
     access(join(directory, "package.json")),
     access(join(directory, "package-lock.json")),
+    access(join(directory, "scripts/run-npm-demo-with-key-file.mjs")),
+    access(join(directory, "scripts/run-npm-demo-with-key-file.test.mjs")),
   ]);
 
   const packageJson = JSON.parse(await readFile(join(directory, "package.json"), "utf8"));
@@ -75,11 +73,11 @@ for (const example of catalog.examples) {
     .split("\n")
     .find((line) => line.startsWith("|") && line.includes(demoLink));
   assert(catalogRow !== undefined, `${example.id}: repository README catalog row is missing`);
-  const npmVersionUrl = `https://www.npmjs.com/package/${example.sdk.package}/v/${dependency}`;
-  const sdkVersionLink = "[\u0060" + example.sdk.package + "@" + dependency + "\u0060](" + npmVersionUrl + ")";
+  const npmPackageUrl = `https://www.npmjs.com/package/${example.sdk.package}`;
+  const sdkPackageLink = "[\u0060" + example.sdk.package + "\u0060](" + npmPackageUrl + ")";
   assert(
-    catalogRow.includes(`| ${sdkVersionLink} |`),
-    `${example.id}: repository README SDK version link drifted`,
+    catalogRow.includes(`| ${sdkPackageLink} |`),
+    `${example.id}: repository README SDK package link drifted`,
   );
 
   const lockText = await readFile(join(directory, "package-lock.json"), "utf8");

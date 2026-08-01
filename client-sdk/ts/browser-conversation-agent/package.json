@@ -6,7 +6,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite --host 0.0.0.0",
-    "dev:key-file": "node ../../../scripts/run-npm-demo-with-key-file.mjs",
+    "dev:key-file": "node scripts/run-npm-demo-with-key-file.mjs",
     "typecheck": "tsc --noEmit",
     "build": "npm run typecheck && vite build",
     "postbuild": "node scripts/verify-dist-paths.mjs",
