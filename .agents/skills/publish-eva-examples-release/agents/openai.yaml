@@ -1,0 +1,4 @@
+interface:
+  display_name: "发布 EVA Examples Release"
+  short_description: "验证、推送分支、等待 CI 并发布 Git tag"
+  default_prompt: "使用 $publish-eva-examples-release 将当前已提交变更按 CI 门禁发布并推送 Git tag。"
