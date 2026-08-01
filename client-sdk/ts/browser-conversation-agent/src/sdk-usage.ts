@@ -120,7 +120,14 @@ export async function startEvaAgent(options: StartEvaAgentOptions): Promise<Star
   const agent = createEvaVoiceDialogueAgent({
     apiKey: options.apiKey,
     asr: { model: "ark-asr-plus", sampleRate: 16_000 },
-    llm: { model: "doubao-seed-2-0-mini-nothink" },
+    llm: {
+      model: "volcengine-doubao-seed-2.0-lite",
+      extraParameters: {
+        thinking: {
+          type: "disabled",
+        },
+      },
+    },
     tts: {
       model: "ark-tts-flash",
       voice: "zh_en_male_evan",
