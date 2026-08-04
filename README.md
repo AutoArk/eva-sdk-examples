@@ -11,6 +11,7 @@
 | SDK | 语言 | SDK 包 / 版本 | Demo | 说明 |
 |---|---|---|---|---|
 | Client SDK | TypeScript | [`@autoark-ai/eva-client-sdk-ts@1.0.0`](https://www.npmjs.com/package/@autoark-ai/eva-client-sdk-ts/v/1.0.0) | [`browser-conversation-agent`](client-sdk/ts/browser-conversation-agent/) | 浏览器端语音、多轮对话、TTS、麦克风控制，以及可选 Emotion、Command 与摄像头图片问答 |
+| Client SDK | TypeScript | [`@autoark-ai/eva-client-sdk-ts@1.0.0`](https://www.npmjs.com/package/@autoark-ai/eva-client-sdk-ts/v/1.0.0) | [`electron-conversation-agent`](client-sdk/ts/electron-conversation-agent/) | Electron 桌面端语音、多轮对话、TTS、麦克风控制，以及可选 Emotion、Command 与摄像头图片问答 |
 
 机器可读目录见 [`examples.json`](examples.json)。表格展示每个 demo 当前使用的精确 SDK 版本，并链接到对应的 package 版本页；版本仍以各 demo 的 package manifest 和 lockfile 为事实源，`verify-catalog.mjs` 会校验表格与 manifest 保持一致。
 
