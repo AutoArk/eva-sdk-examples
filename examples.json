@@ -13,6 +13,19 @@
         "package": "@autoark-ai/eva-client-sdk-ts"
       },
       "status": "release"
+    },
+    {
+      "id": "client-sdk-ts-electron-conversation-agent",
+      "title": "EVA Client SDK · TypeScript Electron Conversation Agent",
+      "sdkFamily": "client-sdk",
+      "language": "ts",
+      "platform": "electron",
+      "path": "client-sdk/ts/electron-conversation-agent",
+      "sdk": {
+        "ecosystem": "npm",
+        "package": "@autoark-ai/eva-client-sdk-ts"
+      },
+      "status": "dev"
     }
   ]
 }
