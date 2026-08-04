@@ -13,6 +13,19 @@
         "package": "@autoark-ai/eva-client-sdk-ts"
       },
       "status": "release"
+    },
+    {
+      "id": "client-sdk-python-voice-dialogue-agent",
+      "title": "EVA Client SDK · Python Voice Dialogue Agent",
+      "sdkFamily": "client-sdk",
+      "language": "python",
+      "platform": "terminal",
+      "path": "client-sdk/python/voice-dialogue-agent",
+      "sdk": {
+        "ecosystem": "pypi",
+        "package": "autoark-eva-client-sdk"
+      },
+      "status": "dev"
     }
   ]
 }

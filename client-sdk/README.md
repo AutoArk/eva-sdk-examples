@@ -5,3 +5,4 @@
 当前示例：
 
 - TypeScript：[`ts/browser-conversation-agent`](ts/browser-conversation-agent/)
+- Python：[`python/voice-dialogue-agent`](python/voice-dialogue-agent/)（当前为 TestPyPI dev candidate）

@@ -1,4 +1,5 @@
 import { access, readFile } from "node:fs/promises";
+import { spawnSync } from "node:child_process";
 import { dirname, join, normalize, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -41,6 +42,46 @@ for (const example of catalog.examples) {
   const directory = resolve(root, normalizedPath);
   assert(directory.startsWith(`${root}${sep}`), `${example.id}: path escapes repository root`);
   await access(join(directory, "README.md"));
+
+  if (example.sdk.ecosystem === "pypi") {
+    assert(typeof example.sdk.package === "string", `${example.id}: PyPI SDK package is required`);
+    await Promise.all([
+      access(join(directory, "pyproject.toml")),
+      access(join(directory, "uv.lock")),
+      access(join(directory, "check_env.py")),
+      access(join(directory, "run_with_key_file.py")),
+      access(join(directory, "main.py")),
+      access(join(directory, "sdk_usage.py")),
+      access(join(directory, "registry-release.json")),
+    ]);
+    const inspection = spawnSync(
+      "python3",
+      [join(root, "scripts/inspect-python-demo.py"), directory, example.sdk.package],
+      { encoding: "utf8" },
+    );
+    assert(
+      inspection.status === 0,
+      `${example.id}: ${inspection.stderr.trim() || "Python demo inspection failed"}`,
+    );
+    const identity = JSON.parse(inspection.stdout);
+    assert(identity.package === example.sdk.package, `${example.id}: inspected package drifted`);
+
+    const demoName = example.path.split("/").at(-1);
+    const demoLink = "[\u0060" + demoName + "\u0060](" + example.path + "/)";
+    const catalogRow = repositoryReadme
+      .split("\n")
+      .find((line) => line.startsWith("|") && line.includes(demoLink));
+    assert(catalogRow !== undefined, `${example.id}: repository README catalog row is missing`);
+    const registryUrl = identity.registry === "testpypi"
+      ? `https://test.pypi.org/project/${example.sdk.package}/${identity.version}/`
+      : `https://pypi.org/project/${example.sdk.package}/${identity.version}/`;
+    const sdkPackageLink = "[\u0060" + example.sdk.package + "\u0060](" + registryUrl + ")";
+    assert(
+      catalogRow.includes(`| ${sdkPackageLink} |`),
+      `${example.id}: repository README SDK package link drifted`,
+    );
+    continue;
+  }
 
   if (example.sdk.ecosystem !== "npm") {
     throw new Error(`${example.id}: unsupported SDK ecosystem ${example.sdk.ecosystem}`);

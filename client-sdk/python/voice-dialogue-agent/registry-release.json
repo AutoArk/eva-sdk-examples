@@ -1,0 +1,37 @@
+{
+  "schemaVersion": 1,
+  "registry": "testpypi",
+  "indexUrl": "https://test.pypi.org/simple",
+  "package": "autoark-eva-client-sdk",
+  "version": "0.0.1.dev1",
+  "nativeAec": {
+    "descriptorId": "eva-webrtc-aec3",
+    "abi": 2
+  },
+  "wheels": [
+    {
+      "filename": "autoark_eva_client_sdk-0.0.1.dev1-cp311-abi3-macosx_11_0_arm64.whl",
+      "sha256": "85dbe189e898257180315bfb8b02a023285eac43f56edd504f20dad3232d9ea4",
+      "system": "Darwin",
+      "machine": "arm64",
+      "nativeLibrary": "libeva_aec.2.dylib",
+      "nativeSha256": "ed0d6f6bf10ec6cc6fbb40b2067f3ae5c88dd80aa41af677c876c7b32dcfd013"
+    },
+    {
+      "filename": "autoark_eva_client_sdk-0.0.1.dev1-cp311-abi3-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl",
+      "sha256": "b1b73b20f65daf934a6ff4802c172a4c48f59a916d5801668a6fd0d92b60bf3a",
+      "system": "Linux",
+      "machine": "x86_64",
+      "nativeLibrary": "libeva_aec.so.2",
+      "nativeSha256": "7b8254f3e5373d1abf13ee312cf09c6321508587d6591a87f0128353a8780ca1"
+    },
+    {
+      "filename": "autoark_eva_client_sdk-0.0.1.dev1-cp311-abi3-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl",
+      "sha256": "b5411492f1c0755cb823030e86b614fedc39981782eca730b3ed0c26b56bec17",
+      "system": "Linux",
+      "machine": "aarch64",
+      "nativeLibrary": "libeva_aec.so.2",
+      "nativeSha256": "a49ecc249bd267df1b552f77c0b3f5ec9f3f276eb81c4c225d8251b33f90b013"
+    }
+  ]
+}

@@ -11,6 +11,7 @@
 | SDK | 语言 | SDK 包 | Demo | 说明 |
 |---|---|---|---|---|
 | Client SDK | TypeScript | [`@autoark-ai/eva-client-sdk-ts`](https://www.npmjs.com/package/@autoark-ai/eva-client-sdk-ts) | [`browser-conversation-agent`](client-sdk/ts/browser-conversation-agent/) | 浏览器端语音、多轮对话、TTS、麦克风控制，以及可选 Emotion、Command 与摄像头图片问答 |
+| Client SDK | Python | [`autoark-eva-client-sdk`](https://test.pypi.org/project/autoark-eva-client-sdk/0.0.1.dev1/) | [`voice-dialogue-agent`](client-sdk/python/voice-dialogue-agent/) | 终端语音对话、native AEC、Emotion、Command，以及可选 camera 图片问答；当前消费 TestPyPI dev candidate |
 
 机器可读目录见 [`examples.json`](examples.json)。表格链接到每个 demo 使用的 SDK package；精确版本以各 demo 的 package manifest 和 lockfile 为事实源。目录中的 `status: "release"` 表示 demo 已正式对外发布，`status: "dev"` 表示仍在开发。`verify-catalog.mjs` 会校验表格、目录与 manifest 保持一致。
 
@@ -29,6 +30,9 @@
 ```bash
 node scripts/verify-catalog.mjs
 node --test client-sdk/ts/browser-conversation-agent/scripts/run-npm-demo-with-key-file.test.mjs
+uv run \
+  --directory "$(git rev-parse --show-toplevel)/client-sdk/python/voice-dialogue-agent" \
+  --frozen python -m pytest
 ```
 
 各 demo 的依赖安装、运行和构建命令见其目录内的 README；根目录不重复维护具体示例的命令。
