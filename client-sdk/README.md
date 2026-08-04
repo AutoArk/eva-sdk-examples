@@ -6,3 +6,4 @@
 
 - TypeScript：[`ts/browser-conversation-agent`](ts/browser-conversation-agent/)
 - TypeScript：[`ts/electron-conversation-agent`](ts/electron-conversation-agent/)
+- Python：[`python/voice-dialogue-agent`](python/voice-dialogue-agent/)（当前为 TestPyPI dev candidate）
