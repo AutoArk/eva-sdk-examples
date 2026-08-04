@@ -19,7 +19,7 @@ SPEC.loader.exec_module(verifier)
 
 def release() -> dict[str, object]:
     return {
-        "version": "0.0.1.dev1",
+        "version": "0.0.1.dev2",
         "wheels": [
             {
                 "filename": "mac.whl",
@@ -49,7 +49,7 @@ def test_rejects_unsupported_or_ambiguous_host() -> None:
 
 def test_registry_oracle_rejects_missing_or_mutated_wheel() -> None:
     payload = {
-        "info": {"version": "0.0.1.dev1"},
+        "info": {"version": "0.0.1.dev2"},
         "urls": [
             {
                 "filename": "mac.whl",
@@ -65,7 +65,7 @@ def test_registry_oracle_rejects_missing_or_mutated_wheel() -> None:
 
 def test_registry_oracle_accepts_only_the_exact_closed_set() -> None:
     payload = {
-        "info": {"version": "0.0.1.dev1"},
+        "info": {"version": "0.0.1.dev2"},
         "urls": [
             {
                 "filename": "mac.whl",

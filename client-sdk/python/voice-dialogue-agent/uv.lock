@@ -21,7 +21,7 @@ wheels = [
 
 [[package]]
 name = "autoark-eva-client-sdk"
-version = "0.0.1.dev1"
+version = "0.0.1.dev2"
 source = { registry = "https://test.pypi.org/simple" }
 dependencies = [
     { name = "httpx" },
@@ -30,9 +30,9 @@ dependencies = [
     { name = "onnxruntime" },
 ]
 wheels = [
-    { url = "https://test-files.pythonhosted.org/packages/0c/42/b3fe2548b218cbc3aa853a2f0309299fc313985ff6c960c7ef5919618f21/autoark_eva_client_sdk-0.0.1.dev1-cp311-abi3-macosx_11_0_arm64.whl", hash = "sha256:85dbe189e898257180315bfb8b02a023285eac43f56edd504f20dad3232d9ea4", size = 4531056, upload-time = "2026-08-04T03:08:03.103Z" },
-    { url = "https://test-files.pythonhosted.org/packages/8f/80/00f088a48b4c5cba8cc9c37ff3e8bf448ab93d4538406d05efdcdac0a48f/autoark_eva_client_sdk-0.0.1.dev1-cp311-abi3-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:b5411492f1c0755cb823030e86b614fedc39981782eca730b3ed0c26b56bec17", size = 14294053, upload-time = "2026-08-04T03:08:28.855Z" },
-    { url = "https://test-files.pythonhosted.org/packages/14/41/b79c96b158ea733411da3c56b5b956384460832e2cd2d0e5fc7a5bfb0ac5/autoark_eva_client_sdk-0.0.1.dev1-cp311-abi3-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:b1b73b20f65daf934a6ff4802c172a4c48f59a916d5801668a6fd0d92b60bf3a", size = 14430468, upload-time = "2026-08-04T03:08:23.246Z" },
+    { url = "https://test-files.pythonhosted.org/packages/1c/c2/7f5fe1ed83c2b325f8497890ff2443a55bf56efee4685a4f1111440813c5/autoark_eva_client_sdk-0.0.1.dev2-cp311-abi3-macosx_11_0_arm64.whl", hash = "sha256:d7a3b613d827f9d3f9742f156c65e0b306de979f78062b9ff94b5c313eb0776b", size = 4532559, upload-time = "2026-08-04T09:39:07.676Z" },
+    { url = "https://test-files.pythonhosted.org/packages/b5/9c/807e0e0106641be98c5c89781ceb518a788091dc6b31ccabf1a1da9a2435/autoark_eva_client_sdk-0.0.1.dev2-cp311-abi3-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:b64acfa3d93aaf33632bc73da31d6df2ec3a5a2e41a08b98f261598161743f73", size = 14295519, upload-time = "2026-08-04T09:39:17.634Z" },
+    { url = "https://test-files.pythonhosted.org/packages/f1/a1/b2bca1c73979234d292c83837e535e69e0e100181dc9ca81c766058232d0/autoark_eva_client_sdk-0.0.1.dev2-cp311-abi3-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:09ff489331cb0e72c1d6a3721077c4ab95b46af7c8e7944518d96affd2cf92f6", size = 14431932, upload-time = "2026-08-04T09:39:12.267Z" },
 ]
 
 [package.optional-dependencies]
@@ -78,7 +78,7 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "autoark-eva-client-sdk", extras = ["pyaudio", "camera"], specifier = "==0.0.1.dev1", index = "https://test.pypi.org/simple" },
+    { name = "autoark-eva-client-sdk", extras = ["pyaudio", "camera"], specifier = "==0.0.1.dev2", index = "https://test.pypi.org/simple" },
     { name = "numpy", specifier = ">=1.26" },
 ]
 
