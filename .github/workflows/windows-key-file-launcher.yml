@@ -1,0 +1,52 @@
+name: Windows key-file launcher
+
+on:
+  push:
+    paths:
+      - ".github/workflows/windows-key-file-launcher.yml"
+      - "scripts/verify-catalog.mjs"
+      - "client-sdk/ts/browser-conversation-agent/**"
+  pull_request:
+    paths:
+      - ".github/workflows/windows-key-file-launcher.yml"
+      - "scripts/verify-catalog.mjs"
+      - "client-sdk/ts/browser-conversation-agent/**"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  windows-node-24:
+    runs-on: windows-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: client-sdk/ts/browser-conversation-agent/package-lock.json
+
+      - name: Test key-file launcher
+        run: node --test client-sdk/ts/browser-conversation-agent/scripts/run-npm-demo-with-key-file.test.mjs
+
+      - name: Verify example catalog
+        run: node scripts/verify-catalog.mjs
+
+      - name: Install browser demo dependencies
+        working-directory: client-sdk/ts/browser-conversation-agent
+        run: npm ci
+
+      - name: Smoke-test the Windows key-file launch path
+        shell: pwsh
+        working-directory: client-sdk/ts/browser-conversation-agent
+        run: |
+          $keyFile = Join-Path $env:RUNNER_TEMP "eva-key.env"
+          Set-Content -Path $keyFile -Value "EVA_GATEWAY_API_KEY=ak-ci-placeholder" -NoNewline
+          npm run dev:key-file -- $keyFile --help
+
+      - name: Build browser demo
+        working-directory: client-sdk/ts/browser-conversation-agent
+        run: npm run build

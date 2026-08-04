@@ -78,6 +78,28 @@ export function createNpmDevArgs(viteArgs = []) {
   return npmArgs;
 }
 
+export function createNpmInvocation(
+  npmArgs,
+  {
+    platform = process.platform,
+    nodeExecutable = process.execPath,
+    npmCliPath = process.env.npm_execpath,
+  } = {},
+) {
+  if (platform !== "win32") {
+    return { command: "npm", args: npmArgs };
+  }
+  if (typeof npmCliPath !== "string" || npmCliPath.length === 0) {
+    throw new Error(
+      "npm CLI path is unavailable; start this launcher with npm run dev:key-file",
+    );
+  }
+  return {
+    command: nodeExecutable,
+    args: [npmCliPath, ...npmArgs],
+  };
+}
+
 export async function main(args = process.argv.slice(2)) {
   const [keyFilePath, ...viteArgs] = args;
   if (keyFilePath === undefined) {
@@ -85,11 +107,11 @@ export async function main(args = process.argv.slice(2)) {
   }
 
   const values = await readKeyFile(keyFilePath);
-  const npmCommand = process.platform === "win32" ? "npm.cmd" : "npm";
   const npmArgs = createNpmDevArgs(viteArgs);
+  const npmInvocation = createNpmInvocation(npmArgs);
 
   console.log("Starting demo with " + keyMappings.length + " mapped key(s) from key file (values hidden).");
-  const result = spawnSync(npmCommand, npmArgs, {
+  const result = spawnSync(npmInvocation.command, npmInvocation.args, {
     cwd: process.cwd(),
     env: createRuntimeEnvironment(values),
     stdio: "inherit",

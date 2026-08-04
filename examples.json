@@ -12,7 +12,7 @@
         "ecosystem": "npm",
         "package": "@autoark-ai/eva-client-sdk-ts"
       },
-      "status": "dev"
+      "status": "release"
     },
     {
       "id": "client-sdk-ts-electron-conversation-agent",

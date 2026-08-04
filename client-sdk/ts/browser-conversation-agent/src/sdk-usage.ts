@@ -106,26 +106,42 @@ export async function startEvaAgent(options: StartEvaAgentOptions): Promise<Star
     aec: createPassthroughAecProcessor(),
     // 默认 browser camera helper 是可替换的 CameraSnapshotSource；factory 不会自行申请权限。
     camera: createBrowserCameraSnapshotSource({
-      video: { facingMode: { ideal: "user" } },
-      mimeType: "image/png",
+      video: {
+        facingMode: { ideal: "user" },
+        width: { ideal: 640 },
+        height: { ideal: 360 },
+      },
+      mimeType: "image/jpeg",
+      jpegQuality: 0.7,
     }),
   };
 
   // apiKey 与三个 model 是应用提供的接入配置；其余字段是本 demo 的选择。
   const agent = createEvaVoiceDialogueAgent({
     apiKey: options.apiKey,
-    asr: { model: "fun_asr", sampleRate: 48_000 },
-    llm: { model: "doubao-seed-2-0-mini-nothink" },
+    asr: { model: "ark-asr-plus", sampleRate: 16_000 },
+    llm: {
+      model: "volcengine-doubao-seed-2.0-lite",
+      extraParameters: {
+        thinking: {
+          type: "disabled",
+        },
+      },
+    },
     tts: {
-      model: "cosyvoice_tts",
-      voice: "longjielidou_v3",
-      sampleRate: 48_000,
+      model: "ark-tts-flash",
+      voice: "zh_en_male_evan",
+      sampleRate: 44100,
     },
     vad: {
       sensitivity: 0.7,
       silenceThresholdMs: 400,
     },
     transports,
+    // AEC 初始化采集阶段的回声消除效果尚未稳定，因此为首段 playback 保留 3 秒保护窗口。
+    bargeIn: {
+      initialPlaybackGuardMs: 3000,
+    },
     history: { maxTurns: 10 },
     camera: { captureTimeoutMs: 1500 },
     // 可选：省略 emotion（或设为 enabled: false）时不运行旁路分类，也不产生 emotion.detected。
@@ -142,7 +158,15 @@ export async function startEvaAgent(options: StartEvaAgentOptions): Promise<Star
       "当前用户消息没有图片时，不得把历史中的视觉描述说成实时观察；",
       "如需引用，只能明确说明那是之前看到的内容，并说明当前没有新的画面。",
     ].join(""),
-    greeting: { mode: "static", text: "你好" },
+    greeting: {
+      mode: "static",
+      text: [
+        "你好，很高兴见到你！我是 EVA 语音助手，接下来你可以和我随便聊聊天，",
+        "也可以问我现在的时间、让我切换页面主题，或者打开摄像头后问我看到了什么。",
+        "我会认真听你说话，并尽量用简洁自然的方式回答。",
+        "准备好以后，直接对我说话就可以了。",
+      ].join(""),
+    },
   });
 
   const unsubscribe = agent.onEvent((event) => options.onEvent(event, agent));
