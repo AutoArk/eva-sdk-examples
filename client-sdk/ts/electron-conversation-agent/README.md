@@ -8,7 +8,7 @@ Electron 主进程与预加载脚本放在独立的 `electron/` 目录：`electr
 
 ## 环境要求
 
-- Node.js `>=22`
+- Node.js `>=22.12.0`（Electron 43 的引擎下限）
 - macOS / Windows / Linux 桌面环境，并允许应用访问麦克风与摄像头
 - 开发者自行管理的 EVA Gateway AK
 
@@ -37,7 +37,13 @@ electron-conversation-agent/
 npm ci
 ```
 
-> 依赖安装时，Electron 会为当前平台下载一个专属运行时二进制（约 90MB）。若处于受限网络或代理环境导致下载失败（`electron --version` 报 `Electron failed to install correctly`），可用官方的 `ELECTRON_MIRROR` 环境变量指向可访问的下载源后重装，详见 [Electron 安装文档](https://www.electronjs.org/docs/latest/tutorial/installation#mirror)。
+> Electron 运行时二进制不在 `npm ci` 阶段下载，而是在首次启动 Electron（如 `npm run dev`、`npm start`）时按当前平台/架构惰性获取并做校验，体积较大（通常上百 MB）。可用下面命令主动触发下载并验证安装：
+>
+> ```bash
+> npx electron --version   # 首次运行会下载二进制，随后打印版本号（期望 v43.3.0）
+> ```
+>
+> 获取失败不会静默成功，而是明确报错 `Electron failed to install correctly`。此时删除 `node_modules/electron` 后重新运行上面的命令即可重试；处于受限网络或代理环境时，可先设置官方的 `ELECTRON_MIRROR` 环境变量指向可访问的下载源，详见 [Electron 安装文档](https://www.electronjs.org/docs/latest/tutorial/installation#mirror)。
 
 `npm run dev` 会并行启动 Vite 开发服务器并在其就绪后拉起 Electron 窗口（主进程通过 `VITE_DEV_SERVER_URL` 加载开发服务器）。
 
