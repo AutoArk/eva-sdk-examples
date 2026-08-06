@@ -5,3 +5,6 @@
 # Generated dependencies and build output
 **/dist/
 **/node_modules/
+
+# Local Codex agent configuration and skills
+.agents/
