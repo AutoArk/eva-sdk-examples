@@ -5,9 +5,8 @@
 Command 与可选 camera 图片问答。SDK 接入主路径集中在 `sdk_usage.py`；终端生命周期在
 `main.py`，音频设备与 AEC、commands、事件输出分别放在独立模块。
 
-当前 demo 状态为 `dev`，精确消费 TestPyPI 的
-`autoark-eva-client-sdk[pyaudio,camera]==0.0.1.dev2`。这是正式 `0.0.1` 前的最终 TestPyPI
-consumer candidate。
+当前 demo 状态为 `dev`，精确消费 PyPI 正式版
+`autoark-eva-client-sdk[pyaudio,camera]==1.0.0`。
 
 ## 准备环境
 
@@ -22,8 +21,8 @@ uv sync --directory "$DEMO_DIR" --frozen
 ```
 
 `check_env.py` 检查 Python 3.11+、C compiler、PortAudio runtime 与 `portaudio.h`，失败时会打印
-macOS 或 Ubuntu/Debian 的可复制修复命令。TestPyPI 只通过 uv explicit named source 提供 EVA
-SDK；NumPy、PyAudio、OpenCV、ONNX Runtime 等第三方依赖仍从正式 PyPI 解析。项目不使用 SDK
+macOS 或 Ubuntu/Debian 的可复制修复命令。EVA SDK 通过 uv explicit named source 提供 PyPI
+依赖；NumPy、PyAudio、OpenCV、ONNX Runtime 等第三方依赖同样从正式 PyPI 解析。项目不使用 SDK
 checkout、本地 path、workspace 或本地 wheel。
 
 ## 选择设备

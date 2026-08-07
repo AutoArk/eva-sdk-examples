@@ -57,18 +57,18 @@ def main() -> int:
 
     sources = pyproject.get("tool", {}).get("uv", {}).get("sources", {})
     source = sources.get(package_name)
-    if source != {"index": "eva-testpypi"}:
-        fail(f"{package_name}: SDK must use only the eva-testpypi named source")
+    if source != {"index": "eva-pypi"}:
+        fail(f"{package_name}: SDK must use only the eva-pypi named source")
     indexes = pyproject.get("tool", {}).get("uv", {}).get("index", [])
-    matching_indexes = [index for index in indexes if index.get("name") == "eva-testpypi"]
+    matching_indexes = [index for index in indexes if index.get("name") == "eva-pypi"]
     if matching_indexes != [
         {
-            "name": "eva-testpypi",
-            "url": "https://test.pypi.org/simple",
+            "name": "eva-pypi",
+            "url": "https://pypi.org/simple",
             "explicit": True,
         }
     ]:
-        fail("eva-testpypi must be an explicit named TestPyPI index")
+        fail("eva-pypi must be an explicit named PyPI index")
     if local_source_present(pyproject):
         fail("pyproject.toml contains a forbidden local/workspace/git source")
 
@@ -79,7 +79,7 @@ def main() -> int:
     if locked.get("version") != version:
         fail(f"uv.lock SDK version drifted: {locked.get('version')} != {version}")
     registry = str(locked.get("source", {}).get("registry", "")).rstrip("/")
-    if registry != "https://test.pypi.org/simple":
+    if registry != "https://pypi.org/simple":
         fail(f"uv.lock SDK registry drifted: {registry}")
     for item in lock.get("package", []):
         if item.get("name") in {package_name, pyproject["project"]["name"]}:
@@ -129,7 +129,7 @@ def main() -> int:
             {
                 "package": package_name,
                 "version": version,
-                "registry": "testpypi",
+                "registry": "pypi",
                 "publicImports": sorted(public_imports),
                 "wheelCount": len(locked_wheels),
             }

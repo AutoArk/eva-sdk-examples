@@ -40,7 +40,11 @@ async def start_eva_agent(*, api_key: str, args: Namespace, audio: AudioSelectio
         input=MeteredInputSource(pyaudio.input),
         output=pyaudio.output,
         aec=pyaudio.aec,
-        camera=OpenCvCameraSource() if args.camera else None,
+        camera=(
+            OpenCvCameraSource(jpeg_quality=70, max_long_edge=640)
+            if args.camera
+            else None
+        ),
     )
 
     # SDK 接入核心：model、VAD、barge-in、command、Emotion、camera 与 Media SPI。
@@ -65,7 +69,7 @@ async def start_eva_agent(*, api_key: str, args: Namespace, audio: AudioSelectio
             commands=build_demo_commands(),
             emotion=EmotionConfig(enabled=not args.no_emotion),
             camera=CameraConfig() if args.camera else None,
-            system_prompt=CAMERA_SYSTEM_PROMPT if args.camera else "",
+            system_prompt=CAMERA_SYSTEM_PROMPT,
             transports=transports,
         )
     )

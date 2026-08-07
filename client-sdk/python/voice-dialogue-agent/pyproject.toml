@@ -4,7 +4,7 @@ version = "0.1.0"
 description = "Terminal voice dialogue demo for the EVA Python Client SDK"
 requires-python = ">=3.11"
 dependencies = [
-    "autoark-eva-client-sdk[pyaudio,camera]==0.0.1.dev2",
+    "autoark-eva-client-sdk[pyaudio,camera]==1.0.0",
     "numpy>=1.26",
 ]
 
@@ -12,11 +12,11 @@ dependencies = [
 dev = ["pytest>=8.4"]
 
 [tool.uv.sources]
-autoark-eva-client-sdk = { index = "eva-testpypi" }
+autoark-eva-client-sdk = { index = "eva-pypi" }
 
 [[tool.uv.index]]
-name = "eva-testpypi"
-url = "https://test.pypi.org/simple"
+name = "eva-pypi"
+url = "https://pypi.org/simple"
 explicit = true
 
 [tool.pytest.ini_options]
