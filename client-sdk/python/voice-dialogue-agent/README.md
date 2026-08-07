@@ -113,6 +113,7 @@ Gateway、语音 turn、TTS、开放扬声器 AEC 效果、camera 画面语义�
 
 ## 排障
 
+- **终端没有收到声音或没有播放声音**：Python demo 运行在命令行中，不会像 Browser demo 那样弹出浏览器麦克风/扬声器授权框。操作系统会按“启动 demo 的终端应用”授予音频权限；某些第三方终端、IDE 内置终端或受限制的命令行宿主可能没有权限，导致输入或输出设备不可用。先在系统设置中为当前终端应用开启麦克风和音频输出权限，再用系统自带 Terminal（macOS Terminal，或 Linux 的系统终端）启动本 demo 重试；必要时重新启动终端应用后再运行 `check_env.py` 和 `--list-devices`。
 - `audio.devices: none`：确认系统音频设备、route 与终端录音权限。
 - `audio-input/output device ...`：重新运行 `--list-devices`，选择角色正确的 index。
 - `mic.level` 长期接近 0：检查 input index、硬件静音和系统权限。

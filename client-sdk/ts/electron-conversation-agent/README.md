@@ -86,6 +86,8 @@ npm run dev:key-file -- /absolute/path/to/eva-key.env
 
 渲染进程通过 `getUserMedia` 采集麦克风与摄像头。主进程为窗口注册了 `setPermissionRequestHandler`，只放行 `media` 权限请求；在 macOS 上还会在启动时调用 `systemPreferences.askForMediaAccess` 申请系统级麦克风与摄像头授权。首次运行时请在系统弹窗中允许，否则采集会失败。
 
+Electron 窗口通常由终端中的 agent 或命令启动，因此系统可能同时按“启动 Electron 的终端应用”检查音频权限。即使 Electron 窗口已经打开，如果该终端应用没有麦克风权限，也可能收不到声音；没有扬声器/音频输出权限时则可能无法播放 TTS。遇到无声或设备不可用时，请在系统设置中为启动它的终端应用开启麦克风和音频输出权限，必要时改用系统自带 Terminal 重新启动 demo，并重新确认授权。
+
 ## 可选能力：Emotion 与 Command
 
 Emotion 和 Command 是彼此独立的 opt-in 能力，也都不是基础 Agent 的必选项。省略它们不会影响文本或语音会话、ASR、LLM、TTS、摄像头以及消息历史。
