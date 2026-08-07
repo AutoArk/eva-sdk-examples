@@ -122,7 +122,7 @@ export async function startEvaAgent(options: StartEvaAgentOptions): Promise<Star
     apiKey: options.apiKey,
     asr: { model: "ark-asr-plus", sampleRate: 16_000 },
     llm: {
-      model: "volcengine-doubao-seed-2.0-lite",
+      model: "volcengine-doubao-seed-2.0-mini",
       extraParameters: {
         thinking: {
           type: "disabled",

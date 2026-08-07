@@ -53,7 +53,7 @@ async def start_eva_agent(*, api_key: str, args: Namespace, audio: AudioSelectio
             api_key=api_key,
             asr=AsrConfig(model="ark-asr-plus", sample_rate=16_000),
             llm=LlmConfig(
-                model="volcengine-doubao-seed-2.0-lite",
+                model="volcengine-doubao-seed-2.0-mini",
                 extra_parameters={"thinking": {"type": "disabled"}},
             ),
             tts=TtsConfig(
