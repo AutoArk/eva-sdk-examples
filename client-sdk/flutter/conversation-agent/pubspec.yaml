@@ -1,0 +1,20 @@
+name: eva_flutter_conversation_agent
+description: "EVA conversation-agent UI demo for Flutter mobile applications."
+publish_to: "none"
+version: 0.0.1+1
+
+environment:
+  sdk: ^3.12.2
+
+dependencies:
+  flutter:
+    sdk: flutter
+  autoark_eva_client_sdk: 0.0.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+flutter:
+  uses-material-design: true

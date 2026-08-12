@@ -7,3 +7,4 @@
 - TypeScript：[`ts/browser-conversation-agent`](ts/browser-conversation-agent/)
 - TypeScript：[`ts/electron-conversation-agent`](ts/electron-conversation-agent/)
 - Python：[`python/voice-dialogue-agent`](python/voice-dialogue-agent/)（当前消费 PyPI 正式版）
+- Flutter：[`flutter/conversation-agent`](flutter/conversation-agent/)（默认消费 pub.dev `0.0.1`；同一 UI 面向 Android 与未来 iOS）
