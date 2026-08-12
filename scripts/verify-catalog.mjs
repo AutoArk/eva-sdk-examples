@@ -3,6 +3,8 @@ import { spawnSync } from "node:child_process";
 import { dirname, join, normalize, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 
+import { inspectPubLockPackage } from "./pub-lock.mjs";
+
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const catalog = JSON.parse(await readFile(join(root, "examples.json"), "utf8"));
 const license = await readFile(join(root, "LICENSE"), "utf8");
@@ -262,19 +264,6 @@ async function assertAbsent(path, message) {
     throw error;
   }
   throw new Error(message);
-}
-
-function inspectPubLockPackage(lockText, packageName) {
-  const escapedName = escapeRegExp(packageName);
-  const block = new RegExp(`^  ${escapedName}:\\n((?: {4,}.*\\n)+)`, "m").exec(lockText)?.[1];
-  assert(typeof block === "string", `pub lock is missing ${packageName}`);
-  const value = (field) => new RegExp(`^ {4,}${field}: ["']?([^"'\\n]+)["']?\\s*$`, "m").exec(block)?.[1];
-  return {
-    sha256: value("sha256"),
-    source: value("source"),
-    url: value("url"),
-    version: value("version"),
-  };
 }
 
 function escapeRegExp(value) {
