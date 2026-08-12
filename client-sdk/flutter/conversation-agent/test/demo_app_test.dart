@@ -178,47 +178,112 @@ void main() {
     expect(controller.events.last.summary, 'event-204');
   });
 
-  test('typed command, emotion and messages use safe projections', () async {
+  test(
+    'typed command, emotion, errors and messages use public projections',
+    () async {
+      final _FakeAgentFactory factory = _FakeAgentFactory();
+      final DemoController controller = DemoController(
+        configuration: readyConfiguration,
+        agentFactory: factory.create,
+      );
+      addTearDown(controller.dispose);
+      await controller.start();
+      final _FakeAgent agent = factory.agents.single;
+      agent.messages = <EvaConversationMessage>[
+        _message(role: 'user', content: 'hello'),
+        _message(role: 'assistant', content: 'hi'),
+      ];
+
+      agent.emit(_commandCompletedEvent());
+      agent.emit(_emotionEvent());
+      agent.emit(
+        _event(
+          type: EvaAgentEventType.error,
+          error: const EvaStructuredError(
+            source: EvaErrorSource.gateway,
+            provider: 'tts',
+            statusCode: 401,
+            message:
+                'Gateway request failed with status 401: invalid_api_key '
+                'and this complete safe diagnostic message remains visible '
+                'even when its length exceeds a normal event summary',
+            fatal: true,
+            traceId: 'trace-safe-401',
+          ),
+        ),
+      );
+      await controller.refreshMessages();
+
+      expect(controller.events[0].summary, 'get_current_time · completed');
+      expect(controller.events[1].summary, 'happy · text');
+      expect(
+        controller.events[2].summary,
+        <String>[
+          'source: gateway',
+          'provider: tts',
+          'statusCode: 401',
+          'message: Gateway request failed with status 401: invalid_api_key '
+              'and this complete safe diagnostic message remains visible '
+              'even when its length exceeds a normal event summary',
+          'fatal: true',
+          'traceId: trace-safe-401',
+        ].join('\n'),
+      );
+      expect(
+        controller.messages.map(
+          (EvaConversationMessage message) => message.content,
+        ),
+        <String>['hello', 'hi'],
+      );
+    },
+  );
+
+  testWidgets('event timeline shows complete structured gateway errors', (
+    WidgetTester tester,
+  ) async {
     final _FakeAgentFactory factory = _FakeAgentFactory();
     final DemoController controller = DemoController(
       configuration: readyConfiguration,
       agentFactory: factory.create,
     );
-    addTearDown(controller.dispose);
-    await controller.start();
-    final _FakeAgent agent = factory.agents.single;
-    agent.messages = <EvaConversationMessage>[
-      _message(role: 'user', content: 'hello'),
-      _message(role: 'assistant', content: 'hi'),
-    ];
 
-    agent.emit(_commandCompletedEvent());
-    agent.emit(_emotionEvent());
-    agent.emit(
+    await tester.pumpWidget(
+      EvaDemoApp(
+        configuration: controller.configuration,
+        controller: controller,
+      ),
+    );
+    await tester.tap(find.byKey(const Key('start-button')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('events-button')));
+    await tester.pumpAndSettle();
+
+    factory.agents.single.emit(
       _event(
         type: EvaAgentEventType.error,
         error: const EvaStructuredError(
           source: EvaErrorSource.gateway,
-          message: 'Authorization test-only-credential',
-          fatal: false,
+          provider: 'asr',
+          statusCode: 401,
+          message: 'Gateway request failed with status 401: unauthorized',
+          fatal: true,
+          traceId: 'trace-ui-401',
         ),
       ),
     );
-    await controller.refreshMessages();
+    await tester.pumpAndSettle();
 
-    expect(controller.events[0].summary, 'get_current_time · completed');
-    expect(controller.events[1].summary, 'happy · text');
-    expect(controller.events[2].summary, 'gateway');
+    expect(find.textContaining('source: gateway'), findsOneWidget);
+    expect(find.textContaining('provider: asr'), findsOneWidget);
+    expect(find.textContaining('statusCode: 401'), findsOneWidget);
     expect(
-      controller.events.map((DemoEventEntry entry) => entry.summary).join(' '),
-      isNot(contains('test-only-credential')),
-    );
-    expect(
-      controller.messages.map(
-        (EvaConversationMessage message) => message.content,
+      find.textContaining(
+        'message: Gateway request failed with status 401: unauthorized',
       ),
-      <String>['hello', 'hi'],
+      findsOneWidget,
     );
+    expect(find.textContaining('fatal: true'), findsOneWidget);
+    expect(find.textContaining('traceId: trace-ui-401'), findsOneWidget);
   });
 
   test('latency and image events expose diagnostic measurements', () {

@@ -40,7 +40,7 @@ final class DemoEventEntry {
     } else if (emotion != null) {
       summary = '${emotion.emotionCode} · ${emotion.source.name}';
     } else if (error != null) {
-      summary = error.source.name;
+      summary = _errorSummary(error);
     } else if (event.type == EvaAgentEventType.turnLatency) {
       summary = _latencySummary(event.payload);
     } else if (event.type == EvaAgentEventType.imageCaptured) {
@@ -60,6 +60,18 @@ final class DemoEventEntry {
   final String? turnId;
   final String summary;
 }
+
+String _errorSummary(EvaStructuredError error) => <String>[
+  'source: ${error.source.name}',
+  if (error.provider != null) 'provider: ${error.provider}',
+  if (error.statusCode != null) 'statusCode: ${error.statusCode}',
+  'message: ${_compactSingleLine(error.message)}',
+  'fatal: ${error.fatal}',
+  if (error.traceId != null) 'traceId: ${error.traceId}',
+  if (error.role != null) 'role: ${error.role}',
+  if (error.operation != null) 'operation: ${error.operation}',
+  if (error.reason != null) 'reason: ${error.reason}',
+].join('\n');
 
 String _latencySummary(Map<String, Object?> payload) {
   final Map<String, Object?> latency = _stringMap(payload['latency']);
@@ -103,9 +115,12 @@ Map<String, Object?> _stringMap(Object? value) {
 int? _number(Object? value) => value is num ? value.toInt() : null;
 
 String _singleLine(String value) {
-  final String compact = value.replaceAll(RegExp(r'\s+'), ' ').trim();
+  final String compact = _compactSingleLine(value);
   return compact.length <= 120 ? compact : '${compact.substring(0, 120)}...';
 }
+
+String _compactSingleLine(String value) =>
+    value.replaceAll(RegExp(r'\s+'), ' ').trim();
 
 final class DemoController extends ChangeNotifier {
   factory DemoController({
