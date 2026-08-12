@@ -630,8 +630,6 @@ final class _EventTimelineState extends State<_EventTimeline> {
                       if (entry.turnId != null) entry.turnId!,
                       if (entry.summary.isNotEmpty) entry.summary,
                     ].join(' · '),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
                   ),
                 );
               },

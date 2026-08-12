@@ -68,6 +68,20 @@ build launcher 使用同样的安全解析与临时 define 文件；AK 会作为
 
 Android app 启动时申请 `RECORD_AUDIO` 和 `CAMERA`。麦克风、TTS 默认开启，camera 默认关闭，可在页面中切换。可以说“现在几点”触发 `get_current_time`，或要求按指定称呼和语气问候以触发 `format_greeting`；Command 和 Emotion 结果会出现在 event timeline。
 
+`error` 事件会在 event timeline 展示 SDK 提供的完整脱敏公共诊断视图。Gateway 错误包括 `source`、具体阶段 `provider`（如 `asr` / `llm` / `tts`）、HTTP `statusCode`、安全 `message`、`fatal`，以及 Gateway 返回时的可选 `traceId`。例如：
+
+```text
+error · turn-1
+source: gateway
+provider: asr
+statusCode: 401
+message: Gateway request failed with status 401: unauthorized
+fatal: true
+traceId: trace-safe-401
+```
+
+`traceId` 仅用于关联 Gateway 日志；机器分类仍应使用 `source`、`provider` 与 `statusCode`。Demo 不显示原始 Gateway 响应、AK、Bearer token 或原生堆栈。
+
 验证结束后应卸载带 AK 的测试 app 并清理本地 build 输出。无论使用哪种模式，都不要把 AK 写进源码、manifest、lockfile 或 Git。
 
 ## SDK 接入主路径
