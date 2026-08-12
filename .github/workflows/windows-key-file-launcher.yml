@@ -4,12 +4,18 @@ on:
   push:
     paths:
       - ".github/workflows/windows-key-file-launcher.yml"
+      - "scripts/pub-lock.mjs"
+      - "scripts/pub-lock.test.mjs"
       - "scripts/verify-catalog.mjs"
+      - "client-sdk/flutter/conversation-agent/**"
       - "client-sdk/ts/browser-conversation-agent/**"
   pull_request:
     paths:
       - ".github/workflows/windows-key-file-launcher.yml"
+      - "scripts/pub-lock.mjs"
+      - "scripts/pub-lock.test.mjs"
       - "scripts/verify-catalog.mjs"
+      - "client-sdk/flutter/conversation-agent/**"
       - "client-sdk/ts/browser-conversation-agent/**"
   workflow_dispatch:
 
@@ -33,7 +39,7 @@ jobs:
         run: node --test client-sdk/ts/browser-conversation-agent/scripts/run-npm-demo-with-key-file.test.mjs
 
       - name: Verify example catalog
-        run: node scripts/verify-catalog.mjs
+        run: node --test scripts/pub-lock.test.mjs && node scripts/verify-catalog.mjs
 
       - name: Install browser demo dependencies
         working-directory: client-sdk/ts/browser-conversation-agent
