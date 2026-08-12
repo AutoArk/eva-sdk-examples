@@ -39,6 +39,19 @@
         "package": "autoark-eva-client-sdk"
       },
       "status": "dev"
+    },
+    {
+      "id": "client-sdk-flutter-conversation-agent",
+      "title": "EVA Client SDK · Flutter Conversation Agent",
+      "sdkFamily": "client-sdk",
+      "language": "flutter",
+      "platform": "mobile",
+      "path": "client-sdk/flutter/conversation-agent",
+      "sdk": {
+        "ecosystem": "pub",
+        "package": "autoark_eva_client_sdk"
+      },
+      "status": "dev"
     }
   ]
 }

@@ -83,6 +83,78 @@ for (const example of catalog.examples) {
     continue;
   }
 
+  if (example.sdk.ecosystem === "pub") {
+    assert(typeof example.sdk.package === "string", `${example.id}: pub SDK package is required`);
+    await Promise.all([
+      access(join(directory, "pubspec.yaml")),
+      access(join(directory, "pubspec.lock")),
+      access(join(directory, "lib/main.dart")),
+      access(join(directory, "lib/sdk_usage.dart")),
+      access(join(directory, "android/app/src/main/AndroidManifest.xml")),
+      access(join(directory, "ios/Runner/Info.plist")),
+      access(join(directory, "scripts/run-flutter-demo-with-key-file.mjs")),
+      access(join(directory, "scripts/run-flutter-demo-with-key-file.test.mjs")),
+      access(join(directory, "scripts/build-android-demo.mjs")),
+      access(join(directory, "scripts/build-android-demo.test.mjs")),
+      access(join(directory, "scripts/use-local-sdk.mjs")),
+      access(join(directory, "scripts/use-local-sdk.test.mjs")),
+    ]);
+    await assertAbsent(
+      join(directory, "pubspec_overrides.yaml"),
+      `${example.id}: disable the local SDK override before verifying the public dependency`,
+    );
+    await assertAbsent(
+      join(directory, "integration_test"),
+      `${example.id}: SDK integration tests must not be copied into the UI demo`,
+    );
+
+    const pubspec = await readFile(join(directory, "pubspec.yaml"), "utf8");
+    assert(/^publish_to:\s*["']?none["']?\s*$/m.test(pubspec), `${example.id}: demo must not be publishable`);
+    const dependencyPattern = new RegExp(
+      `^  ${escapeRegExp(example.sdk.package)}:\\s*(\\d+\\.\\d+\\.\\d+(?:-[0-9A-Za-z.-]+)?)\\s*$`,
+      "m",
+    );
+    const dependency = dependencyPattern.exec(pubspec)?.[1];
+    assert(typeof dependency === "string", `${example.id}: SDK dependency must be an exact pub version`);
+    assert(!/(?:path:|git:|sdk:)/.test(dependency), `${example.id}: local SDK dependency is forbidden`);
+
+    const lockText = await readFile(join(directory, "pubspec.lock"), "utf8");
+    const locked = inspectPubLockPackage(lockText, example.sdk.package);
+    assert(locked.version === dependency, `${example.id}: pub lock SDK version drifted`);
+    assert(locked.source === "hosted", `${example.id}: SDK lock source must be hosted`);
+    assert(locked.url === "https://pub.dev", `${example.id}: SDK lock must resolve from pub.dev`);
+    assert(/^[0-9a-f]{64}$/.test(locked.sha256), `${example.id}: SDK lock must pin a SHA-256`);
+    assert(!/^    source: (?:path|git)\s*$/m.test(lockText), `${example.id}: lockfile contains a local source`);
+    assert(!/(?:\.\.[/\\]|\/Users\/|workspace:)/.test(lockText), `${example.id}: lockfile contains a local path`);
+
+    const mainSource = await readFile(join(directory, "lib/main.dart"), "utf8");
+    const sdkUsageSource = await readFile(join(directory, "lib/sdk_usage.dart"), "utf8");
+    assert(
+      !mainSource.includes("EvaAgent.create(") && sdkUsageSource.includes("EvaAgent.create("),
+      `${example.id}: SDK creation must stay concentrated in lib/sdk_usage.dart`,
+    );
+    assert(
+      sdkUsageSource.includes("buildEvaAgentConfig(")
+        && sdkUsageSource.includes("EvaAgentConfig(")
+        && sdkUsageSource.includes("EvaCommandsConfig("),
+      `${example.id}: sdk_usage.dart must expose the Agent configuration path`,
+    );
+
+    const demoName = example.path.split("/").at(-1);
+    const demoLink = "[\u0060" + demoName + "\u0060](" + example.path + "/)";
+    const catalogRow = repositoryReadme
+      .split("\n")
+      .find((line) => line.startsWith("|") && line.includes(demoLink));
+    assert(catalogRow !== undefined, `${example.id}: repository README catalog row is missing`);
+    const registryUrl = `https://pub.dev/packages/${example.sdk.package}/versions/${dependency}`;
+    const sdkPackageLink = "[\u0060" + example.sdk.package + "\u0060](" + registryUrl + ")";
+    assert(
+      catalogRow.includes(`| ${sdkPackageLink} |`),
+      `${example.id}: repository README SDK package link drifted`,
+    );
+    continue;
+  }
+
   if (example.sdk.ecosystem !== "npm") {
     throw new Error(`${example.id}: unsupported SDK ecosystem ${example.sdk.ecosystem}`);
   }
@@ -162,4 +234,31 @@ console.log(`example catalog passed: ${catalog.examples.length} example(s)`);
 
 function assert(condition, message) {
   if (!condition) throw new Error(message);
+}
+
+async function assertAbsent(path, message) {
+  try {
+    await access(path);
+  } catch (error) {
+    if (error?.code === "ENOENT") return;
+    throw error;
+  }
+  throw new Error(message);
+}
+
+function inspectPubLockPackage(lockText, packageName) {
+  const escapedName = escapeRegExp(packageName);
+  const block = new RegExp(`^  ${escapedName}:\\n((?: {4,}.*\\n)+)`, "m").exec(lockText)?.[1];
+  assert(typeof block === "string", `pub lock is missing ${packageName}`);
+  const value = (field) => new RegExp(`^ {4,}${field}: ["']?([^"'\\n]+)["']?\\s*$`, "m").exec(block)?.[1];
+  return {
+    sha256: value("sha256"),
+    source: value("source"),
+    url: value("url"),
+    version: value("version"),
+  };
+}
+
+function escapeRegExp(value) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
