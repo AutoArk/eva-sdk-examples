@@ -2,10 +2,14 @@ import 'dart:async';
 
 import 'package:autoark_eva_client_sdk/autoark_eva_client_sdk.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 
 import 'sdk_usage.dart';
 
 const int demoEventLimit = 200;
+const MethodChannel _iosDemoPermissions = MethodChannel(
+  'ai.autoark.eva.demo/permissions',
+);
 
 String formatDemoDuration(Duration duration) {
   final int totalSeconds = duration.inSeconds;
@@ -214,7 +218,9 @@ final class DemoController extends ChangeNotifier {
       onError: (Object error) => _onStreamError(generation),
     );
     try {
+      if (_audioEnabled) await _requestMicrophonePermission();
       await agent.setAudioInputEnabled(_audioEnabled);
+      if (_cameraEnabled) await _requestCameraPermission();
       await agent.setCameraEnabled(_cameraEnabled);
       await agent.setTtsEnabled(_ttsEnabled);
       await agent.start();
@@ -222,10 +228,21 @@ final class DemoController extends ChangeNotifier {
       _state = DemoRunState.running;
       _startSessionClock(generation);
       _notify();
-    } on Object {
+    } on EvaException catch (error) {
       if (!_isCurrent(generation)) return;
       _state = DemoRunState.faulted;
-      _statusDetail = 'Agent start failed';
+      _statusDetail = _startFailureSummary(error.error);
+      if (_usesRuntimeApiKey) {
+        _configuration = _configuration.withApiKey('');
+        _usesRuntimeApiKey = false;
+      }
+      _resetSessionClock();
+      _notify();
+      await _releaseAgent(agent, generation, stop: true);
+    } on Object catch (error) {
+      if (!_isCurrent(generation)) return;
+      _state = DemoRunState.faulted;
+      _statusDetail = 'start failed: ${error.runtimeType}';
       if (_usesRuntimeApiKey) {
         _configuration = _configuration.withApiKey('');
         _usesRuntimeApiKey = false;
@@ -235,6 +252,19 @@ final class DemoController extends ChangeNotifier {
       await _releaseAgent(agent, generation, stop: true);
     }
   }
+
+  String _startFailureSummary(EvaStructuredError error) => <String>[
+    'start failed',
+    'source: ${error.source.name}',
+    if (error.provider != null) 'provider: ${error.provider}',
+    if (error.statusCode != null) 'statusCode: ${error.statusCode}',
+    'message: ${_compactSingleLine(error.message)}',
+    'fatal: ${error.fatal}',
+    if (error.traceId != null) 'traceId: ${error.traceId}',
+    if (error.role != null) 'role: ${error.role}',
+    if (error.operation != null) 'operation: ${error.operation}',
+    if (error.reason != null) 'reason: ${error.reason}',
+  ].join('\n');
 
   Future<void> stop() async {
     final DemoAgentPort? agent = _agent;
@@ -277,29 +307,73 @@ final class DemoController extends ChangeNotifier {
       _notify();
       return;
     }
-    await _runControl(
+    if (enabled) await _requestMicrophonePermission();
+    final bool succeeded = await _runControl(
       () => agent.setAudioInputEnabled(enabled),
       'Audio control failed',
     );
-    _audioEnabled = enabled;
+    if (succeeded) _audioEnabled = enabled;
     _notify();
+  }
+
+  Future<bool> _requestMicrophonePermission() async {
+    try {
+      return await _iosDemoPermissions
+              .invokeMethod<bool>('requestMicrophone') ??
+          true;
+    } on MissingPluginException {
+      // Android and injected media implementations own their own permission flow.
+      return true;
+    } on PlatformException catch (error) {
+      if (error.code == 'channel-error') return true;
+      rethrow;
+    }
+  }
+
+  Future<bool> _requestCameraPermission() async {
+    try {
+      return await _iosDemoPermissions.invokeMethod<bool>('requestCamera') ??
+          true;
+    } on MissingPluginException {
+      // Android and injected media implementations own their own permission flow.
+      return true;
+    } on PlatformException catch (error) {
+      if (error.code == 'channel-error') return true;
+      rethrow;
+    }
   }
 
   Future<void> setCameraEnabled(bool enabled) async {
     final DemoAgentPort? agent = _agent;
     if (!canConfigureMedia || enabled == _cameraEnabled) return;
     if (agent == null || _state != DemoRunState.running) {
+      if (enabled && !await _requestCameraPermission()) {
+        _statusDetail = _cameraPermissionFailureSummary();
+        _notify();
+        return;
+      }
       _cameraEnabled = enabled;
       _notify();
       return;
     }
-    await _runControl(
+    if (enabled) await _requestCameraPermission();
+    final bool succeeded = await _runControl(
       () => agent.setCameraEnabled(enabled),
       'Camera control failed',
     );
-    _cameraEnabled = enabled;
+    if (succeeded) _cameraEnabled = enabled;
     _notify();
   }
+
+  String _cameraPermissionFailureSummary() => const <String>[
+    'camera failed',
+    'source: media',
+    'message: Camera permission was denied',
+    'fatal: false',
+    'role: camera',
+    'operation: start',
+    'reason: permission_denied',
+  ].join('\n');
 
   Future<void> setTtsEnabled(bool enabled) async {
     final DemoAgentPort? agent = _agent;
@@ -309,8 +383,11 @@ final class DemoController extends ChangeNotifier {
       _notify();
       return;
     }
-    await _runControl(() => agent.setTtsEnabled(enabled), 'TTS control failed');
-    _ttsEnabled = enabled;
+    final bool succeeded = await _runControl(
+      () => agent.setTtsEnabled(enabled),
+      'TTS control failed',
+    );
+    if (succeeded) _ttsEnabled = enabled;
     _notify();
   }
 
@@ -337,15 +414,21 @@ final class DemoController extends ChangeNotifier {
     _notify();
   }
 
-  Future<void> _runControl(
+  Future<bool> _runControl(
     Future<void> Function() operation,
     String failure,
   ) async {
     try {
       await operation();
+      return true;
+    } on EvaException catch (error) {
+      _statusDetail = _startFailureSummary(error.error);
+      _notify();
+      return false;
     } on Object {
       _statusDetail = failure;
       _notify();
+      return false;
     }
   }
 

@@ -5,12 +5,22 @@ import 'package:eva_flutter_conversation_agent/demo_app.dart';
 import 'package:eva_flutter_conversation_agent/demo_controller.dart';
 import 'package:eva_flutter_conversation_agent/sdk_usage.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
   const DemoConfiguration readyConfiguration = DemoConfiguration(
     apiKey: 'test-only-credential',
   );
+
+  setUp(() {
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(
+          const MethodChannel('ai.autoark.eva.demo/permissions'),
+          (MethodCall call) async => true,
+        );
+  });
 
   test('demo system prompt establishes voice and camera context', () {
     expect(demoSystemPrompt, contains('语音识别转写'));
@@ -100,6 +110,35 @@ void main() {
     expect(agent.ttsValues, <bool>[true, false]);
   });
 
+  test('start failure keeps structured error details visible', () async {
+    final _FakeAgentFactory factory = _FakeAgentFactory(
+      startError: const EvaException(
+        EvaStructuredError(
+          source: EvaErrorSource.gateway,
+          provider: 'auth',
+          statusCode: 401,
+          message: 'invalid_api_key',
+          fatal: true,
+          traceId: 'trace-start-401',
+        ),
+      ),
+    );
+    final DemoController controller = DemoController(
+      configuration: const DemoConfiguration(apiKey: ''),
+      agentFactory: factory.create,
+    );
+    addTearDown(controller.dispose);
+
+    await controller.startWithApiKey('runtime-test-key');
+
+    expect(controller.state, DemoRunState.faulted);
+    expect(controller.statusDetail, contains('source: gateway'));
+    expect(controller.statusDetail, contains('provider: auth'));
+    expect(controller.statusDetail, contains('statusCode: 401'));
+    expect(controller.statusDetail, contains('traceId: trace-start-401'));
+    expect(controller.statusDetail, isNot(contains('Agent start failed')));
+  });
+
   test('media controls can be configured before start', () async {
     final _FakeAgentFactory factory = _FakeAgentFactory();
     final DemoController controller = DemoController(
@@ -122,6 +161,61 @@ void main() {
     expect(agent.audioValues, <bool>[false]);
     expect(agent.cameraValues, <bool>[true]);
     expect(agent.ttsValues, <bool>[false]);
+  });
+
+  test('camera permission denial keeps the switch disabled', () async {
+    const MethodChannel permissions = MethodChannel(
+      'ai.autoark.eva.demo/permissions',
+    );
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(permissions, (MethodCall call) async {
+      if (call.method == 'requestCamera') return false;
+      return null;
+    });
+    addTearDown(
+      () => TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(permissions, null),
+    );
+
+    final DemoController controller = DemoController(
+      configuration: readyConfiguration,
+      agentFactory: _FakeAgentFactory().create,
+    );
+    addTearDown(controller.dispose);
+
+    await controller.setCameraEnabled(true);
+
+    expect(controller.cameraEnabled, isFalse);
+    expect(controller.statusDetail, contains('reason: permission_denied'));
+    expect(controller.statusDetail, contains('role: camera'));
+  });
+
+  test('microphone permission is requested before starting audio', () async {
+    const MethodChannel permissions = MethodChannel(
+      'ai.autoark.eva.demo/permissions',
+    );
+    final List<String> calls = <String>[];
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(permissions, (MethodCall call) async {
+      calls.add(call.method);
+      return true;
+    });
+    addTearDown(
+      () => TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(permissions, null),
+    );
+
+    final _FakeAgentFactory factory = _FakeAgentFactory();
+    final DemoController controller = DemoController(
+      configuration: readyConfiguration,
+      agentFactory: factory.create,
+    );
+    addTearDown(controller.dispose);
+
+    await controller.start();
+
+    expect(calls, contains('requestMicrophone'));
+    expect(factory.agents.single.started, 1);
   });
 
   test(
@@ -473,18 +567,24 @@ void main() {
 }
 
 final class _FakeAgentFactory {
+  _FakeAgentFactory({this.startError});
+
+  final EvaException? startError;
   final List<_FakeAgent> agents = <_FakeAgent>[];
   final List<DemoConfiguration> configurations = <DemoConfiguration>[];
 
   DemoAgentPort create(DemoConfiguration configuration) {
     configurations.add(configuration);
-    final _FakeAgent agent = _FakeAgent();
+    final _FakeAgent agent = _FakeAgent(startError: startError);
     agents.add(agent);
     return agent;
   }
 }
 
 final class _FakeAgent implements DemoAgentPort {
+  _FakeAgent({this.startError});
+
+  final EvaException? startError;
   final StreamController<EvaAgentEvent> _events =
       StreamController<EvaAgentEvent>.broadcast(sync: true);
   final List<String> texts = <String>[];
@@ -523,6 +623,7 @@ final class _FakeAgent implements DemoAgentPort {
   @override
   Future<void> start() async {
     started += 1;
+    if (startError != null) throw startError!;
   }
 
   @override
