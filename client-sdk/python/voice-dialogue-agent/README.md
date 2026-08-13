@@ -5,8 +5,7 @@
 Command 与可选 camera 图片问答。SDK 接入主路径集中在 `sdk_usage.py`；终端生命周期在
 `main.py`，音频设备与 AEC、commands、事件输出分别放在独立模块。
 
-当前 demo 状态为 `dev`，精确消费 PyPI 正式版
-`autoark-eva-client-sdk[pyaudio,camera]==1.0.0`。
+当前 demo 状态为 `dev`，精确消费 `pyproject.toml` 与 `uv.lock` 锁定的 PyPI 正式版。
 
 ## 准备环境
 

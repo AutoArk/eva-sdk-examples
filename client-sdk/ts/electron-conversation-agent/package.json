@@ -19,7 +19,7 @@
     "node": ">=22.12.0"
   },
   "dependencies": {
-    "@autoark-ai/eva-client-sdk-ts": "1.0.4"
+    "@autoark-ai/eva-client-sdk-ts": "1.0.5"
   },
   "devDependencies": {
     "concurrently": "^9.1.0",

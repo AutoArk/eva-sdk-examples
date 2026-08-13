@@ -10,7 +10,9 @@ description: 验证 eva-sdk-examples 中 EVA Python voice-dialogue-agent 对公�
 ## 固定范围
 
 - demo：`client-sdk/python/voice-dialogue-agent`
-- 版本、registry、wheel 与 native library SHA 闭集：demo 的 `registry-release.json`
+- 版本与 registry：demo 的 `pyproject.toml`
+- wheel 文件名与 SHA 闭集：包管理器生成的 `uv.lock`
+- 不随版本重复的 native AEC 契约：demo 的 `native-aec-contract.json`
 - 自动 verifier：`scripts/verify_registry_install.py`
 - 不执行 upload、publish、Git commit、push、tag 或 release；不修改 SDK 仓。
 
@@ -33,11 +35,12 @@ uv run --directory "$DEMO_DIR" --frozen python \
 
 `verify_registry_install.py` 必须从 demo `.venv` 运行，并证实：
 
-1. TestPyPI/PyPI 返回的 release version、wheel 文件名与 SHA-256 是 `registry-release.json` 的精确闭集。
+1. TestPyPI/PyPI 返回的 release version、wheel 文件名与 SHA-256 是 manifest/lockfile 的精确闭集。
 2. 下载当前平台实际 wheel 后重新计算的 SHA-256 一致。
 3. 已安装 distribution 与 `eva_client_sdk.__version__` 都是精确版本，且包位于 demo `.venv`。
 4. 安装不含 `direct_url.json`，排除本地 path/wheel/editable 来源。
-5. packaged native library 文件名/SHA、descriptor `eva-webrtc-aec3`、ABI 2 与 native version 均有效。
+5. 从已核验 wheel 解出的 packaged native library 与安装文件 SHA 一致，descriptor
+   `eva-webrtc-aec3`、ABI 2 与 native version 均有效。
 
 任一步失败都停止，不进入人工回归。报告路径必须是仓外新文件，不覆盖旧 evidence。
 

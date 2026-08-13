@@ -6,16 +6,22 @@ import hashlib
 import importlib.metadata
 import json
 import platform
+import re
 import sys
 import tempfile
+import tomllib
 import urllib.request
+import zipfile
 from collections.abc import Mapping, Sequence
 from pathlib import Path
 from typing import Any
 
 REPOSITORY_ROOT = Path(__file__).resolve().parents[4]
 DEMO_ROOT = REPOSITORY_ROOT / "client-sdk/python/voice-dialogue-agent"
-RELEASE_PATH = DEMO_ROOT / "registry-release.json"
+CONTRACT_PATH = DEMO_ROOT / "native-aec-contract.json"
+PROJECT_PATH = DEMO_ROOT / "pyproject.toml"
+LOCK_PATH = DEMO_ROOT / "uv.lock"
+PACKAGE = "autoark-eva-client-sdk"
 
 
 def fail(message: str) -> None:
@@ -31,10 +37,63 @@ def sha256(path: Path) -> str:
 
 
 def read_release() -> dict[str, Any]:
-    release = json.loads(RELEASE_PATH.read_text(encoding="utf-8"))
-    if release.get("schemaVersion") != 1:
-        fail("registry-release.json schemaVersion must be 1")
-    return release
+    contract = json.loads(CONTRACT_PATH.read_text(encoding="utf-8"))
+    if contract != {"schemaVersion": 1, "descriptorId": "eva-webrtc-aec3", "abi": 2}:
+        fail("native-aec-contract.json drifted")
+
+    project = tomllib.loads(PROJECT_PATH.read_text(encoding="utf-8"))
+    dependencies = project.get("project", {}).get("dependencies", [])
+    matches = [
+        re.fullmatch(rf"{re.escape(PACKAGE)}\[[^]]+\]==([0-9A-Za-z.!+-]+)", item)
+        for item in dependencies
+        if isinstance(item, str)
+    ]
+    matches = [match for match in matches if match is not None]
+    if len(matches) != 1:
+        fail(f"{PACKAGE}: exact SDK dependency is required")
+    version = matches[0].group(1)
+
+    lock = tomllib.loads(LOCK_PATH.read_text(encoding="utf-8"))
+    packages = [item for item in lock.get("package", []) if item.get("name") == PACKAGE]
+    if len(packages) != 1 or packages[0].get("version") != version:
+        fail("uv.lock SDK identity drifted from pyproject.toml")
+    locked = packages[0]
+    registry = str(locked.get("source", {}).get("registry", "")).rstrip("/")
+    if registry not in {"https://pypi.org/simple", "https://test.pypi.org/simple"}:
+        fail(f"unsupported registry: {registry}")
+
+    wheels = []
+    for item in locked.get("wheels", []):
+        filename = str(item["url"]).rsplit("/", 1)[-1]
+        system, machine = wheel_platform(filename)
+        wheels.append(
+            {
+                "system": system,
+                "machine": machine,
+                "filename": filename,
+                "sha256": str(item["hash"]).removeprefix("sha256:"),
+            }
+        )
+    return {
+        "registry": "testpypi" if "test.pypi.org" in registry else "pypi",
+        "package": PACKAGE,
+        "version": version,
+        "nativeAec": {
+            "descriptorId": contract["descriptorId"],
+            "abi": contract["abi"],
+        },
+        "wheels": wheels,
+    }
+
+
+def wheel_platform(filename: str) -> tuple[str, str]:
+    if "macosx" in filename and filename.endswith("_arm64.whl"):
+        return ("Darwin", "arm64")
+    if "manylinux" in filename and filename.endswith("_x86_64.whl"):
+        return ("Linux", "x86_64")
+    if "manylinux" in filename and filename.endswith("_aarch64.whl"):
+        return ("Linux", "aarch64")
+    fail(f"unsupported SDK wheel platform: {filename}")
 
 
 def select_expected_wheel(
@@ -94,7 +153,23 @@ def download_and_hash(url: str, destination: Path) -> str:
     return sha256(destination)
 
 
-def inspect_installed(release: Mapping[str, Any], wheel: Mapping[str, Any]) -> dict[str, Any]:
+def inspect_wheel_native(path: Path) -> dict[str, str]:
+    with zipfile.ZipFile(path) as archive:
+        matches = [
+            item
+            for item in archive.namelist()
+            if "/_native/libeva_aec" in item and not item.endswith("/")
+        ]
+        if len(matches) != 1:
+            fail(f"expected one packaged native AEC library, found {matches}")
+        member = matches[0]
+        return {
+            "nativeLibrary": Path(member).name,
+            "nativeSha256": hashlib.sha256(archive.read(member)).hexdigest(),
+        }
+
+
+def inspect_installed(release: Mapping[str, Any], native: Mapping[str, str]) -> dict[str, Any]:
     package = str(release["package"])
     version = str(release["version"])
     distribution = importlib.metadata.distribution(package)
@@ -111,13 +186,13 @@ def inspect_installed(release: Mapping[str, Any], wheel: Mapping[str, Any]) -> d
     if direct_urls:
         fail("installed SDK contains direct_url.json; local/path installation is forbidden")
 
-    native_path = package_root / "_native" / str(wheel["nativeLibrary"])
+    native_path = package_root / "_native" / native["nativeLibrary"]
     if not native_path.is_file():
         fail(f"installed native AEC library is missing: {native_path.name}")
     native_digest = sha256(native_path)
-    if native_digest != wheel["nativeSha256"]:
+    if native_digest != native["nativeSha256"]:
         fail(
-            f"installed native AEC SHA drifted: expected {wheel['nativeSha256']}, got {native_digest}"
+            f"installed native AEC SHA drifted: expected {native['nativeSha256']}, got {native_digest}"
         )
 
     import eva_client_sdk
@@ -164,14 +239,16 @@ def main(argv: Sequence[str] | None = None) -> int:
     wheel = select_expected_wheel(release, platform.system(), platform.machine())
     package = release["package"]
     version = release["version"]
-    registry_url = f"https://test.pypi.org/pypi/{package}/{version}/json"
+    registry_host = "test.pypi.org" if release["registry"] == "testpypi" else "pypi.org"
+    registry_url = f"https://{registry_host}/pypi/{package}/{version}/json"
     remote_payload = fetch_json(registry_url)
     urls = validate_remote_release(release, remote_payload)
     with tempfile.TemporaryDirectory(prefix="eva-python-registry-") as directory:
         snapshot = Path(directory) / str(wheel["filename"])
         remote_digest = download_and_hash(urls[str(wheel["filename"])], snapshot)
-    if remote_digest != wheel["sha256"]:
-        fail(f"downloaded wheel SHA drifted: expected {wheel['sha256']}, got {remote_digest}")
+        if remote_digest != wheel["sha256"]:
+            fail(f"downloaded wheel SHA drifted: expected {wheel['sha256']}, got {remote_digest}")
+        native = inspect_wheel_native(snapshot)
 
     report = {
         "schemaVersion": 1,
@@ -181,7 +258,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         "version": version,
         "wheel": wheel["filename"],
         "wheelSha256": remote_digest,
-        "installed": inspect_installed(release, wheel),
+        "installed": inspect_installed(release, native),
         "automatedChecks": {
             "registryIdentity": "PASS",
             "installedIdentity": "PASS",

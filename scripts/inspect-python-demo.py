@@ -33,10 +33,10 @@ def main() -> int:
     package_name = sys.argv[2]
     pyproject_path = directory / "pyproject.toml"
     lock_path = directory / "uv.lock"
-    release_path = directory / "registry-release.json"
+    contract_path = directory / "native-aec-contract.json"
     pyproject = tomllib.loads(pyproject_path.read_text(encoding="utf-8"))
     lock = tomllib.loads(lock_path.read_text(encoding="utf-8"))
-    release = json.loads(release_path.read_text(encoding="utf-8"))
+    contract = json.loads(contract_path.read_text(encoding="utf-8"))
 
     dependencies = pyproject.get("project", {}).get("dependencies", [])
     matches = [
@@ -94,21 +94,12 @@ def main() -> int:
     if local_source_present(lock) or re.search(r"(?:file://|workspace|editable|/Users/)", lock_text):
         fail("uv.lock contains a forbidden local source")
 
-    expected_wheels = {
-        wheel["filename"]: wheel["sha256"] for wheel in release.get("wheels", [])
-    }
     locked_wheels = {
         str(item["url"]).rsplit("/", 1)[-1]: str(item["hash"]).removeprefix("sha256:")
         for item in locked.get("wheels", [])
     }
-    if locked_wheels != expected_wheels:
-        fail("uv.lock wheel filename/SHA set drifted from registry-release.json")
-    if (
-        release.get("package") != package_name
-        or release.get("version") != version
-        or str(release.get("indexUrl", "")).rstrip("/") != registry
-    ):
-        fail("registry-release.json package/version/index drifted from project identity")
+    if contract != {"schemaVersion": 1, "descriptorId": "eva-webrtc-aec3", "abi": 2}:
+        fail("native-aec-contract.json drifted")
 
     public_imports: set[str] = set()
     for path in directory.glob("*.py"):

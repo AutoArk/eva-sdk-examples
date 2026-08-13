@@ -12,7 +12,7 @@
 |---|---|---|---|---|
 | Client SDK | TypeScript | [`@autoark-ai/eva-client-sdk-ts`](https://www.npmjs.com/package/@autoark-ai/eva-client-sdk-ts) | [`browser-conversation-agent`](client-sdk/ts/browser-conversation-agent/) | 浏览器端语音、多轮对话、TTS、麦克风控制，以及可选 Emotion、Command 与摄像头图片问答 |
 | Client SDK | TypeScript | [`@autoark-ai/eva-client-sdk-ts`](https://www.npmjs.com/package/@autoark-ai/eva-client-sdk-ts) | [`electron-conversation-agent`](client-sdk/ts/electron-conversation-agent/) | Electron 桌面端语音、多轮对话、TTS、麦克风控制，以及可选 Emotion、Command 与摄像头图片问答 |
-| Client SDK | Python | [`autoark-eva-client-sdk`](https://pypi.org/project/autoark-eva-client-sdk/1.0.0/) | [`voice-dialogue-agent`](client-sdk/python/voice-dialogue-agent/) | 终端语音对话、native AEC、Emotion、Command，以及可选 camera 图片问答；当前消费 PyPI 正式版 |
+| Client SDK | Python | [`autoark-eva-client-sdk`](https://pypi.org/project/autoark-eva-client-sdk/) | [`voice-dialogue-agent`](client-sdk/python/voice-dialogue-agent/) | 终端语音对话、native AEC、Emotion、Command，以及可选 camera 图片问答；当前消费 PyPI 正式版 |
 
 机器可读目录见 [`examples.json`](examples.json)。表格链接到每个 demo 使用的 SDK package；精确版本以各 demo 的 package manifest 和 lockfile 为事实源。目录中的 `status: "release"` 表示 demo 已正式对外发布，`status: "dev"` 表示仍在开发。`verify-catalog.mjs` 会校验表格、目录与 manifest 保持一致。
 
@@ -37,6 +37,13 @@ uv run \
 ```
 
 各 demo 的依赖安装、运行和构建命令见其目录内的 README；根目录不重复维护具体示例的命令。
+
+更新 Client SDK 版本时使用统一入口；脚本会更新所有对应 manifest、重新生成 lockfile，并执行
+catalog 一致性检查，任一步失败都会恢复本轮文件修改：
+
+```bash
+node scripts/update-sdk-versions.mjs --ts <version> --python <version>
+```
 
 ## License
 

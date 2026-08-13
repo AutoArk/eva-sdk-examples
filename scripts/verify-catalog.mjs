@@ -16,6 +16,7 @@ assert(license.includes("Copyright (c) 2026 AutoArk AI"), "repository LICENSE ow
 
 const ids = new Set();
 const paths = new Set();
+const sdkVersions = new Map();
 
 for (const example of catalog.examples) {
   assert(typeof example.id === "string" && example.id.length > 0, "example id is required");
@@ -52,7 +53,7 @@ for (const example of catalog.examples) {
       access(join(directory, "run_with_key_file.py")),
       access(join(directory, "main.py")),
       access(join(directory, "sdk_usage.py")),
-      access(join(directory, "registry-release.json")),
+      access(join(directory, "native-aec-contract.json")),
     ]);
     const inspection = spawnSync(
       "python3",
@@ -65,6 +66,13 @@ for (const example of catalog.examples) {
     );
     const identity = JSON.parse(inspection.stdout);
     assert(identity.package === example.sdk.package, `${example.id}: inspected package drifted`);
+    recordSdkVersion(example.sdk.package, identity.version, example.id);
+
+    const demoReadme = await readFile(join(directory, "README.md"), "utf8");
+    assert(
+      !demoReadme.includes(`${example.sdk.package}[`) && !demoReadme.includes(`${example.sdk.package}==`),
+      `${example.id}: README must not duplicate the exact SDK version`,
+    );
 
     const demoName = example.path.split("/").at(-1);
     const demoLink = "[\u0060" + demoName + "\u0060](" + example.path + "/)";
@@ -73,8 +81,8 @@ for (const example of catalog.examples) {
       .find((line) => line.startsWith("|") && line.includes(demoLink));
     assert(catalogRow !== undefined, `${example.id}: repository README catalog row is missing`);
     const registryUrl = identity.registry === "testpypi"
-      ? `https://test.pypi.org/project/${example.sdk.package}/${identity.version}/`
-      : `https://pypi.org/project/${example.sdk.package}/${identity.version}/`;
+      ? `https://test.pypi.org/project/${example.sdk.package}/`
+      : `https://pypi.org/project/${example.sdk.package}/`;
     const sdkPackageLink = "[\u0060" + example.sdk.package + "\u0060](" + registryUrl + ")";
     assert(
       catalogRow.includes(`| ${sdkPackageLink} |`),
@@ -107,6 +115,7 @@ for (const example of catalog.examples) {
     `${example.id}: SDK dependency must be an exact registry version`,
   );
   assert(!/^(?:file:|link:|workspace:)/.test(dependency), `${example.id}: local SDK dependency is forbidden`);
+  recordSdkVersion(example.sdk.package, dependency, example.id);
 
   const demoName = example.path.split("/").at(-1);
   const demoLink = "[\u0060" + demoName + "\u0060](" + example.path + "/)";
@@ -162,4 +171,13 @@ console.log(`example catalog passed: ${catalog.examples.length} example(s)`);
 
 function assert(condition, message) {
   if (!condition) throw new Error(message);
+}
+
+function recordSdkVersion(packageName, version, exampleId) {
+  const existing = sdkVersions.get(packageName);
+  assert(
+    existing === undefined || existing.version === version,
+    `${exampleId}: SDK version ${version} drifted from ${existing?.version} in ${existing?.exampleId}`,
+  );
+  sdkVersions.set(packageName, { version, exampleId });
 }
