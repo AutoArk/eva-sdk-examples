@@ -16,12 +16,34 @@ final class EvaDemoApp extends StatefulWidget {
   State<EvaDemoApp> createState() => _EvaDemoAppState();
 }
 
-final class _EvaDemoAppState extends State<EvaDemoApp> {
+final class _EvaDemoAppState extends State<EvaDemoApp>
+    with WidgetsBindingObserver {
   late final DemoController _controller =
       widget.controller ?? DemoController(configuration: widget.configuration);
+  bool _mediaSuspendedByLifecycle = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.paused ||
+        state == AppLifecycleState.hidden) {
+      _mediaSuspendedByLifecycle = true;
+      return;
+    }
+    if (state == AppLifecycleState.resumed && _mediaSuspendedByLifecycle) {
+      _mediaSuspendedByLifecycle = false;
+      unawaited(_controller.resumeMediaAfterForeground());
+    }
+  }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     unawaited(_controller.close());
     _controller.dispose();
     super.dispose();

@@ -316,10 +316,28 @@ final class DemoController extends ChangeNotifier {
     _notify();
   }
 
+  Future<void> resumeMediaAfterForeground() async {
+    final DemoAgentPort? agent = _agent;
+    if (agent == null || _state != DemoRunState.running) return;
+    if (_audioEnabled) {
+      await _runControl(
+        () => agent.setAudioInputEnabled(true),
+        'Audio resume failed',
+      );
+    }
+    if (_cameraEnabled && _isCurrent(_generation)) {
+      await _runControl(
+        () => agent.setCameraEnabled(true),
+        'Camera resume failed',
+      );
+    }
+  }
+
   Future<bool> _requestMicrophonePermission() async {
     try {
-      return await _iosDemoPermissions
-              .invokeMethod<bool>('requestMicrophone') ??
+      return await _iosDemoPermissions.invokeMethod<bool>(
+            'requestMicrophone',
+          ) ??
           true;
     } on MissingPluginException {
       // Android and injected media implementations own their own permission flow.

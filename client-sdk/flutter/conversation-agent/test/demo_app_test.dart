@@ -110,6 +110,44 @@ void main() {
     expect(agent.ttsValues, <bool>[true, false]);
   });
 
+  testWidgets(
+    'foreground resume explicitly reacquires only user-enabled media',
+    (WidgetTester tester) async {
+      final _FakeAgentFactory factory = _FakeAgentFactory();
+      final DemoController controller = DemoController(
+        configuration: readyConfiguration,
+        agentFactory: factory.create,
+      );
+      await controller.setCameraEnabled(true);
+      await tester.pumpWidget(
+        EvaDemoApp(
+          configuration: controller.configuration,
+          controller: controller,
+        ),
+      );
+      await controller.start();
+      final _FakeAgent agent = factory.agents.single;
+      expect(agent.audioValues, <bool>[true]);
+      expect(agent.cameraValues, <bool>[true]);
+
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+      await tester.pumpAndSettle();
+
+      expect(agent.audioValues, <bool>[true, true]);
+      expect(agent.cameraValues, <bool>[true, true]);
+
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+      await tester.pumpAndSettle();
+      expect(
+        agent.audioValues,
+        <bool>[true, true],
+        reason: 'plain resumed must not duplicate reacquisition',
+      );
+      expect(agent.cameraValues, <bool>[true, true]);
+    },
+  );
+
   test('start failure keeps structured error details visible', () async {
     final _FakeAgentFactory factory = _FakeAgentFactory(
       startError: const EvaException(
@@ -169,9 +207,9 @@ void main() {
     );
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMethodCallHandler(permissions, (MethodCall call) async {
-      if (call.method == 'requestCamera') return false;
-      return null;
-    });
+          if (call.method == 'requestCamera') return false;
+          return null;
+        });
     addTearDown(
       () => TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
           .setMockMethodCallHandler(permissions, null),
@@ -197,9 +235,9 @@ void main() {
     final List<String> calls = <String>[];
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMethodCallHandler(permissions, (MethodCall call) async {
-      calls.add(call.method);
-      return true;
-    });
+          calls.add(call.method);
+          return true;
+        });
     addTearDown(
       () => TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
           .setMockMethodCallHandler(permissions, null),

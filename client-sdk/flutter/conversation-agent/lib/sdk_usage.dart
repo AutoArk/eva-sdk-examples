@@ -74,7 +74,11 @@ EvaAgentConfig buildEvaAgentConfig(DemoConfiguration config) => EvaAgentConfig(
   // 省略 transports，Android 会使用 SDK 自带的麦克风、扬声器、AEC 与 CameraX helper。
   vad: const EvaVadConfig(sensitivity: 0.7, silenceThresholdMs: 400),
   history: const EvaHistoryConfig(maxTurns: 10),
-  camera: const EvaCameraConfig(captureTimeoutMs: 1500),
+  camera: const EvaCameraConfig(
+    captureTimeoutMs: 1500,
+    maxLongEdge: 640,
+    jpegQuality: 70,
+  ),
   bargeIn: const EvaBargeInConfig(initialPlaybackGuardMs: 3000),
   systemPrompt: demoSystemPrompt,
   greeting: const EvaStaticGreeting('你好，我是 EVA，很高兴认识你。'),
