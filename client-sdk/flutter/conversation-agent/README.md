@@ -2,16 +2,15 @@
 
 这是 EVA Client SDK 的 Flutter mobile demo，展示实时语音对话、转写与回复、TTS、麦克风控制、摄像头图片问答、Emotion、Command、文本输入以及会话 stop/restart。
 
-Demo 默认只依赖 pub.dev 上的 `autoark_eva_client_sdk 0.0.1`，不依赖 SDK 源码仓库。SDK 创建主路径集中在 [`lib/sdk_usage.dart`](lib/sdk_usage.dart)；[`lib/demo_controller.dart`](lib/demo_controller.dart) 只管理会话与 UI 状态，[`lib/demo_app.dart`](lib/demo_app.dart) 只负责页面展示。接入方可以先阅读 `sdk_usage.dart`，再按自己的产品替换 UI。
-
-当前公开 SDK `0.0.1` 只支持 Android。目录中保留同一个 iOS host，未来 SDK 提供 iOS native implementation 后继续复用同一份 `lib/`，不另建一套 UI Demo。
+Demo 依赖 pub.dev 上的 `autoark_eva_client_sdk`（精确版本见 `pubspec.yaml`），不依赖 SDK 源码仓库。SDK 创建主路径集中在 [`lib/sdk_usage.dart`](lib/sdk_usage.dart)；[`lib/demo_controller.dart`](lib/demo_controller.dart) 只管理会话与 UI 状态，[`lib/demo_app.dart`](lib/demo_app.dart) 只负责页面展示。接入方可以先阅读 `sdk_usage.dart`，再按自己的产品替换 UI。
 
 ## 环境要求
 
 - Flutter / Dart 版本满足 `pubspec.yaml`
 - Android API 24+、arm64 设备或模拟器
-- Java 17
-- Android 麦克风与摄像头 runtime permission
+- iOS 15.1+、arm64 真机或 Apple Silicon arm64 Simulator
+- Java 17（Android 构建）
+- Android/iOS 麦克风与摄像头 runtime permission
 - 开发者自行管理的 EVA Gateway AK
 
 ## 安装与运行
@@ -66,7 +65,7 @@ node scripts/build-android-demo.mjs --release --key-file /absolute/path/to/key-f
 
 build launcher 使用同样的安全解析与临时 define 文件；AK 会作为 Dart compile-time define 进入 APK。即使是 release APK，内置 AK 也可能被逆向提取，因此这种模式只适合受控的本地/内部测试，不能作为凭证保密或公开分发方案。
 
-Android app 启动时申请 `RECORD_AUDIO` 和 `CAMERA`。麦克风、TTS 默认开启，camera 默认关闭，可在页面中切换。可以说“现在几点”触发 `get_current_time`，或要求按指定称呼和语气问候以触发 `format_greeting`；Command 和 Emotion 结果会出现在 event timeline。
+app 启动时会申请麦克风与相机权限（Android 对应 `RECORD_AUDIO` 和 `CAMERA`，iOS 在系统弹窗中授权）。麦克风、TTS 默认开启，camera 默认关闭，可在页面中切换。可以说"现在几点"触发 `get_current_time`，或要求按指定称呼和语气问候以触发 `format_greeting`；Command 和 Emotion 结果会出现在 event timeline。
 
 `error` 事件会在 event timeline 展示 SDK 提供的完整脱敏公共诊断视图。Gateway 错误包括 `source`、具体阶段 `provider`（如 `asr` / `llm` / `tts`）、HTTP `statusCode`、安全 `message`、`fatal`，以及 Gateway 返回时的可选 `traceId`。例如：
 
@@ -92,7 +91,7 @@ traceId: trace-safe-401
 2. 通过 `EvaAgentConfig` 组合 ASR、LLM、TTS；
 3. 配置 system prompt、static greeting 和业务 metadata；
 4. opt-in 开启 Emotion，并注册两个无外部副作用的 Command；
-5. 省略 `transports`，使用 SDK 自带的 Android microphone、speaker、system AEC 与 CameraX helper；
+5. 通过 `createDefaultEvaMediaTransports` 显式构造 SDK 默认 SPI 实现并注入 `transports`；
 6. 通过 `EvaAgent` 的 `events`、`start()`、media toggles、`submitText()`、`getMessages()` 和 `stop()` 驱动产品 UI。
 
 核心配置形状如下，完整可运行代码以 `sdk_usage.dart` 为准：
@@ -112,6 +111,12 @@ final EvaAgent agent = EvaAgent.create(
       model: config.ttsModel,
       voice: 'zh_en_male_evan',
       sampleRate: 44100,
+    ),
+    transports: createDefaultEvaMediaTransports(
+      camera: const EvaDefaultCameraOptions(
+        maxLongEdge: 640,
+        jpegQuality: 70,
+      ),
     ),
     vad: const EvaVadConfig(
       sensitivity: 0.7,
@@ -151,7 +156,7 @@ node scripts/use-local-sdk.mjs /absolute/path/to/autoark-eva-client-sdk/flutter
 flutter pub get
 ```
 
-脚本只生成被 Git 忽略的 `pubspec_overrides.yaml`，不会改动 `pubspec.yaml`。该 override 位于 Dart package resolution 层，不绑定 Android；未来 iOS 仍使用同一条命令和同一份 UI。恢复公开制品：
+脚本只生成被 Git 忽略的 `pubspec_overrides.yaml`，不会改动 `pubspec.yaml`。该 override 位于 Dart package resolution 层，不绑定平台；Android 与 iOS 均使用同一条命令和同一份 UI。恢复公开制品：
 
 ```bash
 node scripts/use-local-sdk.mjs --registry
@@ -174,11 +179,11 @@ node --test scripts/*.test.mjs
 node ../../../scripts/verify-catalog.mjs
 ```
 
-自动检查证明公开 package 可解析、Dart UI/controller 行为、Android 编译和依赖泄漏边界。真实 Gateway、麦克风、扬声器听感、OEM audio route/AEC、camera 画面与 stop 后设备资源释放仍需目标 Android 真机人工验收。
+自动检查证明公开 package 可解析、Dart UI/controller 行为、平台编译和依赖泄漏边界。真实 Gateway、麦克风、扬声器听感、系统 audio route/AEC、camera 画面与 stop 后设备资源释放仍需目标真机人工验收。
 
 ## SDK 兼容性
 
-精确版本由 `pubspec.yaml` 和 `pubspec.lock` 共同锁定。升级时修改 exact version、重新运行 `flutter pub get`，并完成上述自动检查和目标设备回归。iOS host 当前只是未来兼容结构；`autoark_eva_client_sdk 0.0.1` 没有 iOS native implementation，因此当前不把 iOS build 或运行声明为支持。
+精确版本由 `pubspec.yaml` 和 `pubspec.lock` 共同锁定。升级时修改 exact version、重新运行 `flutter pub get`，并完成上述自动检查和目标设备回归。`autoark_eva_client_sdk` 同时支持 Android 与 iOS；Android 最低 API 24，iOS 最低 15.1，支持 arm64 真机与 Apple Silicon arm64 Simulator。
 
 ## License
 

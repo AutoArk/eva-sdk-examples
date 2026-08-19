@@ -23,7 +23,13 @@ void main() {
     expect(config.history?.maxTurns, 10);
     expect(config.camera?.captureTimeoutMs, 1500);
     expect(config.bargeIn?.initialPlaybackGuardMs, 3000);
-    expect(config.transports, isNull);
+    expect(config.transports, isNotNull);
+    expect(config.transports?.camera, isNotNull);
+    expect(config.transports?.aec.descriptor.id, 'eva.platform-default');
+    expect(config.transports?.aec.descriptor.supportedPlatforms, <String>[
+      'android',
+      'ios',
+    ]);
     expect(config.emotion.enabled, isTrue);
     expect(config.commands?.registrations, hasLength(2));
     expect(config.commands?.maxCallsPerTurn, 3);

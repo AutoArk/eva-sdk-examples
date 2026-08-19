@@ -51,7 +51,7 @@
         "ecosystem": "pub",
         "package": "autoark_eva_client_sdk"
       },
-      "status": "dev"
+      "status": "release"
     }
   ]
 }

@@ -9,7 +9,7 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  autoark_eva_client_sdk: 0.0.1
+  autoark_eva_client_sdk: 0.1.0
 
 dev_dependencies:
   flutter_test:

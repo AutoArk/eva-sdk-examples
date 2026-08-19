@@ -48,7 +48,7 @@ final class DemoConfiguration {
       ttsModel.trim().isNotEmpty;
 }
 
-/// SDK 接入主路径：把应用配置转换为一个使用 Android 默认媒体 helper 的 EVA Agent。
+/// SDK 接入主路径：把应用配置转换为一个使用 EVA 默认媒体 SPI 实现的 Agent。
 DemoAgentPort createEvaDemoAgent(DemoConfiguration config) {
   final EvaAgent agent = EvaAgent.create(buildEvaAgentConfig(config));
   return EvaDemoAgentPort._(agent);
@@ -71,14 +71,13 @@ EvaAgentConfig buildEvaAgentConfig(DemoConfiguration config) => EvaAgentConfig(
     sampleRate: 44100,
   ),
 
-  // 省略 transports，Android 会使用 SDK 自带的麦克风、扬声器、AEC 与 CameraX helper。
+  // 默认实现也是普通 SPI 实现：显式构造完整配套 assembly，再通过 transports 注入。
+  transports: createDefaultEvaMediaTransports(
+    camera: const EvaDefaultCameraOptions(maxLongEdge: 640, jpegQuality: 70),
+  ),
   vad: const EvaVadConfig(sensitivity: 0.7, silenceThresholdMs: 400),
   history: const EvaHistoryConfig(maxTurns: 10),
-  camera: const EvaCameraConfig(
-    captureTimeoutMs: 1500,
-    maxLongEdge: 640,
-    jpegQuality: 70,
-  ),
+  camera: const EvaCameraConfig(captureTimeoutMs: 1500),
   bargeIn: const EvaBargeInConfig(initialPlaybackGuardMs: 3000),
   systemPrompt: demoSystemPrompt,
   greeting: const EvaStaticGreeting('你好，我是 EVA，很高兴认识你。'),
