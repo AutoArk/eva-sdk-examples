@@ -13,15 +13,32 @@ Demo 依赖 pub.dev 上的 `autoark_eva_client_sdk`（精确版本见 `pubspec.y
 - Android/iOS 麦克风与摄像头 runtime permission
 - 开发者自行管理的 EVA Gateway AK
 
-## 安装与运行
+## 安装、构建与启动
 
-先按 committed lockfile 安装公开制品：
+下面的命令会做不同的事情；先按目标选择，避免把“生成产物”和“启动 app”混为一谈。
+
+| 目标 | 命令 | 会重新构建 app | 会安装/启动 app |
+|---|---|---:|---:|
+| 准备或切换依赖后解析制品 | `flutter pub get` | 否 | 否 |
+| 本机开发（内置 AK） | key-file launcher | 是 | 是 |
+| 本机开发（运行时输入 AK） | `flutter run -d <device-id>` | 是 | 是 |
+| 生成 Android release APK | Android build script | 是 | 否 |
+| 生成 iOS release app | `flutter build ios --release` | 是 | 否 |
+| 使用已有 release 产物 | `adb install` / `devicectl install` / `devicectl launch` | 否 | 安装或启动 |
+
+### 1. 准备依赖
+
+先按 committed lockfile 解析并安装公开制品；该命令不构建或启动 app：
 
 ```bash
 flutter pub get
 ```
 
-### 内置 AK：本地测试
+### 2. 本机开发：构建、安装并启动
+
+以下两种开发启动方式都会调用 `flutter run`：Flutter 会为目标设备构建（通常可增量构建）、安装并启动 app，而不是复用某个已有 APK 或 `.app`。
+
+#### 内置 AK：本地测试（推荐）
 
 本地测试优先使用内置 AK（key file）模式，减少用户在 app 内手动输入 AK 的操作；skill/自动化流程可通过该 key-file 路径调用 AK。
 
@@ -31,27 +48,27 @@ key file 保存在仓库外，至少包含：
 EVA_GATEWAY_API_KEY=<value>
 ```
 
-开发运行时从 demo 目录启动：
+从 demo 目录启动：
 
 ```bash
 node scripts/run-flutter-demo-with-key-file.mjs /absolute/path/to/key-file -d <device-id>
 ```
 
-launcher 只读取声明的变量，不执行 key file 内容，也不打印 AK。它把所需值写入权限为 `0600` 的临时 JSON，作为本次 `flutter run` 的 `--dart-define-from-file` 输入，并在进程退出后删除。AK 会作为 Dart compile-time define 进入构建产物；即使是 release 产物，内置 AK 也可能被逆向提取，因此这种模式只适合受控的本地/内部测试，不能作为凭证保密或公开分发方案。
+launcher 只读取声明的变量，不执行 key file 内容，也不打印 AK。它把所需值写入权限为 `0600` 的临时 JSON，作为本次 `flutter run` 的 `--dart-define-from-file` 输入，并在进程退出后删除。AK 会作为 Dart compile-time define 进入这次构建的产物；即使是 release 产物，内置 AK 也可能被逆向提取，因此这种模式只适合受控的本地/内部测试，不能作为凭证保密或公开分发方案。
 
-### 不内置 AK：运行时输入
+#### 不内置 AK：运行时输入
 
-AK 是可选的构建输入。没有本地 AK 时直接开发运行：
+没有本地 AK 时，直接开发运行：
 
 ```bash
 flutter run -d <device-id>
 ```
 
-生成的 app 不包含 Gateway AK。app 启动后会显示遮罩输入框；输入 AK 并点击“使用 AK 并开始”后才创建 Agent 和启动语音会话。运行时输入的 AK 只保存在当前 app 进程内，不写文件、不进入事件或诊断信息；stop/restart 会在本次进程中继续使用，彻底关闭 app 后需要重新输入。
+这次构建的 app 不包含 Gateway AK。app 启动后会显示遮罩输入框；输入 AK 并点击“使用 AK 并开始”后才创建 Agent 和启动语音会话。运行时输入的 AK 不参与构建，只保存在当前 app 进程内，不写文件、不进入事件或诊断信息；stop/restart 会在本次进程中继续使用，彻底关闭 app 后需要重新输入。
 
-### release 构建（对外演示）
+### 3. 生成 release 交付产物
 
-对外演示建议构建 **release** 版：debug 构建只能由 `flutter run` 启动，用户点图标打不开；release 构建需要几分钟，是正常编译耗时，请耐心等待。
+需要将 app 交付给他人安装，或脱离开发环境演示时，生成 **release** 产物。以下构建命令只生成产物，不会安装或启动 app；release 构建需要几分钟是正常的编译耗时。
 
 Android：
 
@@ -60,7 +77,7 @@ node scripts/build-android-demo.mjs --release                                  #
 node scripts/build-android-demo.mjs --release --key-file /绝对路径/to/key-file # 带 AK
 ```
 
-产物在 `build/app/outputs/flutter-apk/app-release.apk`，用 `adb install -r` 安装到设备。
+产物在 `build/app/outputs/flutter-apk/app-release.apk`。无 `--key-file` 时，app 启动后会要求运行时输入 AK；带 `--key-file` 时，AK 会进入该 APK，限受控测试使用。
 
 iOS（需先完成下方「iOS 真机注意事项」的签名配置）：
 
@@ -68,14 +85,30 @@ iOS（需先完成下方「iOS 真机注意事项」的签名配置）：
 flutter build ios --release
 ```
 
-产物在 `build/ios/iphoneos/Runner.app`（不带 AK，启动后输入 AK）。安装到已连接的真机：
+产物在 `build/ios/iphoneos/Runner.app`（不带 AK，启动后输入 AK）。
+
+带 AK 的 iOS release 目前走 key-file launcher 的 release 模式：
+
+```bash
+node scripts/run-flutter-demo-with-key-file.mjs /绝对路径/to/key-file -d <device-id> --release
+```
+
+这条命令会通过 `flutter run --release` 重新构建、安装并启动，并非使用已有 `Runner.app`。新版 Flutter 可能报 `expected app not found`（产物实际在 `build/ios/Release-iphoneos/`）；遇到时退回上面的不带 AK `flutter build ios --release` + 下方 `devicectl` 安装流程，并在 app 内运行时输入 AK。
+
+### 4. 安装或启动已有 release 产物
+
+Android 安装已有 APK（不会重新构建；完成后从设备桌面打开 app）：
+
+```bash
+adb install -r build/app/outputs/flutter-apk/app-release.apk
+```
+
+iOS 安装并启动已有 `Runner.app`（不会重新构建）：
 
 ```bash
 xcrun devicectl device install app --device <device-id> build/ios/iphoneos/Runner.app
 xcrun devicectl device process launch --device <device-id> ai.autoark.eva.examples.evaFlutterConversationAgent
 ```
-
-带 AK 的 iOS release 走 key-file launcher 的 release 模式：`node scripts/run-flutter-demo-with-key-file.mjs /绝对路径/to/key-file -d <device-id> --release`。新版 Flutter 的 `flutter run --release` 可能报 "expected app not found"（产物实际在 `build/ios/Release-iphoneos/`），遇到时退回上面的 `flutter build ios --release` + devicectl 安装。
 
 ### 运行时行为与错误可见性
 
@@ -216,6 +249,8 @@ flutter pub get
 提交前应恢复 registry mode，并运行根目录 catalog checker。它会拒绝本地 override、源码路径 lock、被误迁入的 `integration_test/` 和非 pub.dev SDK 来源。
 
 ## 自动检查与人工边界
+
+下列 `flutter build` 与 Android build script 都会重新编译，但只用于验证构建产物，不会安装或启动 app：
 
 ```bash
 flutter test
