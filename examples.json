@@ -25,7 +25,7 @@
         "ecosystem": "npm",
         "package": "@autoark-ai/eva-client-sdk-ts"
       },
-      "status": "dev"
+      "status": "release"
     },
     {
       "id": "client-sdk-python-voice-dialogue-agent",
@@ -38,7 +38,7 @@
         "ecosystem": "pypi",
         "package": "autoark-eva-client-sdk"
       },
-      "status": "dev"
+      "status": "release"
     },
     {
       "id": "client-sdk-flutter-conversation-agent",
@@ -51,7 +51,7 @@
         "ecosystem": "pub",
         "package": "autoark_eva_client_sdk"
       },
-      "status": "release"
+      "status": "dev"
     }
   ]
 }
