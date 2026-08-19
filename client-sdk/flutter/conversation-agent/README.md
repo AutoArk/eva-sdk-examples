@@ -22,8 +22,8 @@ Demo 依赖 pub.dev 上的 `autoark_eva_client_sdk`（精确版本见 `pubspec.y
 | 准备或切换依赖后解析制品 | `flutter pub get` | 否 | 否 |
 | 本机启动（默认 release、内置 AK） | key-file launcher | 是 | 是 |
 | 本机启动（默认 release、运行时输入 AK） | `flutter run --release -d <device-id>` | 是 | 是 |
-| 生成 Android APK（默认 release） | Android build script | 是 | 否 |
-| 生成 iOS release app | `flutter build ios --release` | 是 | 否 |
+| 生成 Android APK（默认 release） | `node scripts/build-android-demo.mjs` | 是 | 否 |
+| 生成 iOS app（默认 release） | `node scripts/build-ios-demo.mjs` | 是 | 否 |
 | 使用已有 release 产物 | `adb install` / `devicectl install` / `devicectl launch` | 否 | 安装或启动 |
 
 ### 1. 准备依赖
@@ -56,6 +56,8 @@ node scripts/run-flutter-demo-with-key-file.mjs /absolute/path/to/key-file -d <d
 
 launcher 默认调用 `flutter run --release`。需要调试时才在末尾添加 `--debug`：`node scripts/run-flutter-demo-with-key-file.mjs /absolute/path/to/key-file -d <device-id> --debug`。launcher 只读取声明的变量，不执行 key file 内容，也不打印 AK。它把所需值写入权限为 `0600` 的临时 JSON，作为本次 `flutter run` 的 `--dart-define-from-file` 输入，并在进程退出后删除。AK 会作为 Dart compile-time define 进入这次构建的产物；即使是 release 产物，内置 AK 也可能被逆向提取，因此这种模式只适合受控的本地/内部测试，不能作为凭证保密或公开分发方案。
 
+这个 launcher 适用于本机联调，会构建、安装并启动 app；生成可交付产物请使用下方第 3 节的 build script。
+
 #### 不内置 AK：运行时输入
 
 没有本地 AK 时，直接开发运行：
@@ -82,18 +84,11 @@ node scripts/build-android-demo.mjs --key-file /绝对路径/to/key-file # 带 A
 iOS（需先完成下方「iOS 真机注意事项」的签名配置）：
 
 ```bash
-flutter build ios --release
+node scripts/build-ios-demo.mjs                                  # 不带 AK，默认 release
+node scripts/build-ios-demo.mjs --key-file /绝对路径/to/key-file # 带 AK，默认 release
 ```
 
-产物在 `build/ios/iphoneos/Runner.app`（不带 AK，启动后输入 AK）。
-
-带 AK 的 iOS release 目前走 key-file launcher 的 release 模式：
-
-```bash
-node scripts/run-flutter-demo-with-key-file.mjs /绝对路径/to/key-file -d <device-id>
-```
-
-这条命令默认通过 `flutter run --release` 重新构建、安装并启动，并非使用已有 `Runner.app`。新版 Flutter 可能报 `expected app not found`（产物实际在 `build/ios/Release-iphoneos/`）；遇到时退回上面的不带 AK `flutter build ios --release` + 下方 `devicectl` 安装流程，并在 app 内运行时输入 AK。
+两种命令都只生成 `Runner.app`，不会安装或启动 app。产物在 `build/ios/iphoneos/Runner.app`（无 `--key-file` 时启动后输入 AK；带 `--key-file` 时 AK 会进入该 app，仅限受控测试使用）。需要 debug 产物时才添加 `--debug`。
 
 ### 4. 安装或启动已有 release 产物
 
@@ -257,10 +252,13 @@ flutter test
 flutter analyze
 flutter build apk --debug
 flutter build apk --release
-# 统一构建入口默认验证 release；--debug 仅用于调试 APK
+# 统一构建入口默认验证 release；--debug 仅用于调试产物
 node scripts/build-android-demo.mjs
 node scripts/build-android-demo.mjs --key-file /absolute/path/to/key-file
 node scripts/build-android-demo.mjs --debug
+node scripts/build-ios-demo.mjs
+node scripts/build-ios-demo.mjs --key-file /absolute/path/to/key-file
+node scripts/build-ios-demo.mjs --debug
 node --test scripts/*.test.mjs
 node ../../../scripts/verify-catalog.mjs
 ```
