@@ -21,17 +21,9 @@ Demo 依赖 pub.dev 上的 `autoark_eva_client_sdk`（精确版本见 `pubspec.y
 flutter pub get
 ```
 
-### 不内置 AK：运行时输入
-
-AK 是可选的构建输入。没有本地 AK 时直接开发运行：
-
-```bash
-flutter run -d <device-id>
-```
-
-生成的 app 不包含 Gateway AK。app 启动后会显示遮罩输入框；输入 AK 并点击“使用 AK 并开始”后才创建 Agent 和启动语音会话。运行时输入的 AK 只保存在当前 app 进程内，不写文件、不进入事件或诊断信息；stop/restart 会在本次进程中继续使用，彻底关闭 app 后需要重新输入。
-
 ### 内置 AK：本地测试
+
+本地测试优先使用内置 AK（key file）模式，减少用户在 app 内手动输入 AK 的操作；skill/自动化流程可通过该 key-file 路径调用 AK。
 
 key file 保存在仓库外，至少包含：
 
@@ -46,6 +38,16 @@ node scripts/run-flutter-demo-with-key-file.mjs /absolute/path/to/key-file -d <d
 ```
 
 launcher 只读取声明的变量，不执行 key file 内容，也不打印 AK。它把所需值写入权限为 `0600` 的临时 JSON，作为本次 `flutter run` 的 `--dart-define-from-file` 输入，并在进程退出后删除。AK 会作为 Dart compile-time define 进入构建产物；即使是 release 产物，内置 AK 也可能被逆向提取，因此这种模式只适合受控的本地/内部测试，不能作为凭证保密或公开分发方案。
+
+### 不内置 AK：运行时输入
+
+AK 是可选的构建输入。没有本地 AK 时直接开发运行：
+
+```bash
+flutter run -d <device-id>
+```
+
+生成的 app 不包含 Gateway AK。app 启动后会显示遮罩输入框；输入 AK 并点击“使用 AK 并开始”后才创建 Agent 和启动语音会话。运行时输入的 AK 只保存在当前 app 进程内，不写文件、不进入事件或诊断信息；stop/restart 会在本次进程中继续使用，彻底关闭 app 后需要重新输入。
 
 ### release 构建（对外演示）
 
