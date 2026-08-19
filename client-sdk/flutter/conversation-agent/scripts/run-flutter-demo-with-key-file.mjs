@@ -44,7 +44,15 @@ export function parseKeyFile(contents, mappings = keyMappings) {
 }
 
 export function createFlutterArgs(definesPath, flutterArgs = []) {
-  return ["run", `--dart-define-from-file=${definesPath}`, ...flutterArgs];
+  const hasExplicitMode = flutterArgs.some((argument) => (
+    argument === "--debug" || argument === "--profile" || argument === "--release"
+  ));
+  return [
+    "run",
+    `--dart-define-from-file=${definesPath}`,
+    ...(hasExplicitMode ? [] : ["--release"]),
+    ...flutterArgs,
+  ];
 }
 
 export async function main(args = process.argv.slice(2)) {

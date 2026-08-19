@@ -3,9 +3,9 @@ import test from "node:test";
 
 import { createFlutterBuildArgs, parseBuildOptions } from "./build-android-demo.mjs";
 
-test("defaults to an APK without a bundled key", () => {
-  assert.deepEqual(parseBuildOptions([]), { mode: "debug", keyFilePath: undefined });
-  assert.deepEqual(createFlutterBuildArgs({ mode: "debug" }), ["build", "apk", "--debug"]);
+test("defaults to a release APK without a bundled key", () => {
+  assert.deepEqual(parseBuildOptions([]), { mode: "release", keyFilePath: undefined });
+  assert.deepEqual(createFlutterBuildArgs({ mode: "release" }), ["build", "apk", "--release"]);
 });
 
 test("accepts an optional key file and release mode", () => {
@@ -22,4 +22,8 @@ test("accepts an optional key file and release mode", () => {
 test("rejects missing key paths and unknown options", () => {
   assert.throws(() => parseBuildOptions(["--key-file"]), /requires a path/);
   assert.throws(() => parseBuildOptions(["--flavor", "demo"]), /unknown option/);
+});
+
+test("accepts an explicit debug mode", () => {
+  assert.deepEqual(parseBuildOptions(["--debug"]), { mode: "debug", keyFilePath: undefined });
 });

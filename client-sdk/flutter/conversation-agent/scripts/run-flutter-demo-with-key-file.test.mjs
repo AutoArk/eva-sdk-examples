@@ -21,10 +21,21 @@ test("rejects missing, duplicate, whitespace, and unmatched-quote values", () =>
   assert.throws(() => parseKeyFile("EVA_GATEWAY_API_KEY=\"ak-value"), /unmatched quotes/);
 });
 
-test("places the private defines file before forwarded flutter run options", () => {
+test("defaults to release and places the private defines file before forwarded options", () => {
   assert.deepEqual(createFlutterArgs("/private/tmp/defines.json", ["-d", "emulator-5554"]), [
     "run",
     "--dart-define-from-file=/private/tmp/defines.json",
+    "--release",
+    "-d",
+    "emulator-5554",
+  ]);
+});
+
+test("keeps an explicitly requested debug mode", () => {
+  assert.deepEqual(createFlutterArgs("/private/tmp/defines.json", ["--debug", "-d", "emulator-5554"]), [
+    "run",
+    "--dart-define-from-file=/private/tmp/defines.json",
+    "--debug",
     "-d",
     "emulator-5554",
   ]);

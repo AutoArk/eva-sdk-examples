@@ -9,7 +9,7 @@ import { pathToFileURL } from "node:url";
 import { parseKeyFile } from "./run-flutter-demo-with-key-file.mjs";
 
 export function parseBuildOptions(args) {
-  let mode = "debug";
+  let mode = "release";
   let keyFilePath;
   for (let index = 0; index < args.length; index += 1) {
     const argument = args[index];

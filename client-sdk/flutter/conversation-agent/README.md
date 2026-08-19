@@ -20,9 +20,9 @@ Demo 依赖 pub.dev 上的 `autoark_eva_client_sdk`（精确版本见 `pubspec.y
 | 目标 | 命令 | 会重新构建 app | 会安装/启动 app |
 |---|---|---:|---:|
 | 准备或切换依赖后解析制品 | `flutter pub get` | 否 | 否 |
-| 本机开发（内置 AK） | key-file launcher | 是 | 是 |
-| 本机开发（运行时输入 AK） | `flutter run -d <device-id>` | 是 | 是 |
-| 生成 Android release APK | Android build script | 是 | 否 |
+| 本机启动（默认 release、内置 AK） | key-file launcher | 是 | 是 |
+| 本机启动（默认 release、运行时输入 AK） | `flutter run --release -d <device-id>` | 是 | 是 |
+| 生成 Android APK（默认 release） | Android build script | 是 | 否 |
 | 生成 iOS release app | `flutter build ios --release` | 是 | 否 |
 | 使用已有 release 产物 | `adb install` / `devicectl install` / `devicectl launch` | 否 | 安装或启动 |
 
@@ -36,7 +36,7 @@ flutter pub get
 
 ### 2. 本机开发：构建、安装并启动
 
-以下两种开发启动方式都会调用 `flutter run`：Flutter 会为目标设备构建（通常可增量构建）、安装并启动 app，而不是复用某个已有 APK 或 `.app`。
+以下两种启动方式都会为目标设备构建、安装并启动 app，而不是复用某个已有 APK 或 `.app`。默认使用 **release**，避免设备上的 demo 反复尝试建立 Dart 调试连接；只有需要断点、热重载等调试能力时，才显式添加 `--debug`。
 
 #### 内置 AK：本地测试（推荐）
 
@@ -54,17 +54,17 @@ EVA_GATEWAY_API_KEY=<value>
 node scripts/run-flutter-demo-with-key-file.mjs /absolute/path/to/key-file -d <device-id>
 ```
 
-launcher 只读取声明的变量，不执行 key file 内容，也不打印 AK。它把所需值写入权限为 `0600` 的临时 JSON，作为本次 `flutter run` 的 `--dart-define-from-file` 输入，并在进程退出后删除。AK 会作为 Dart compile-time define 进入这次构建的产物；即使是 release 产物，内置 AK 也可能被逆向提取，因此这种模式只适合受控的本地/内部测试，不能作为凭证保密或公开分发方案。
+launcher 默认调用 `flutter run --release`。需要调试时才在末尾添加 `--debug`：`node scripts/run-flutter-demo-with-key-file.mjs /absolute/path/to/key-file -d <device-id> --debug`。launcher 只读取声明的变量，不执行 key file 内容，也不打印 AK。它把所需值写入权限为 `0600` 的临时 JSON，作为本次 `flutter run` 的 `--dart-define-from-file` 输入，并在进程退出后删除。AK 会作为 Dart compile-time define 进入这次构建的产物；即使是 release 产物，内置 AK 也可能被逆向提取，因此这种模式只适合受控的本地/内部测试，不能作为凭证保密或公开分发方案。
 
 #### 不内置 AK：运行时输入
 
 没有本地 AK 时，直接开发运行：
 
 ```bash
-flutter run -d <device-id>
+flutter run --release -d <device-id>
 ```
 
-这次构建的 app 不包含 Gateway AK。app 启动后会显示遮罩输入框；输入 AK 并点击“使用 AK 并开始”后才创建 Agent 和启动语音会话。运行时输入的 AK 不参与构建，只保存在当前 app 进程内，不写文件、不进入事件或诊断信息；stop/restart 会在本次进程中继续使用，彻底关闭 app 后需要重新输入。
+需要调试时改为 `flutter run --debug -d <device-id>`。这次构建的 app 不包含 Gateway AK。app 启动后会显示遮罩输入框；输入 AK 并点击“使用 AK 并开始”后才创建 Agent 和启动语音会话。运行时输入的 AK 不参与构建，只保存在当前 app 进程内，不写文件、不进入事件或诊断信息；stop/restart 会在本次进程中继续使用，彻底关闭 app 后需要重新输入。
 
 ### 3. 生成 release 交付产物
 
@@ -73,11 +73,11 @@ flutter run -d <device-id>
 Android：
 
 ```bash
-node scripts/build-android-demo.mjs --release                                  # 不带 AK
-node scripts/build-android-demo.mjs --release --key-file /绝对路径/to/key-file # 带 AK
+node scripts/build-android-demo.mjs                                  # 不带 AK，默认 release
+node scripts/build-android-demo.mjs --key-file /绝对路径/to/key-file # 带 AK，默认 release
 ```
 
-产物在 `build/app/outputs/flutter-apk/app-release.apk`。无 `--key-file` 时，app 启动后会要求运行时输入 AK；带 `--key-file` 时，AK 会进入该 APK，限受控测试使用。
+产物在 `build/app/outputs/flutter-apk/app-release.apk`。无 `--key-file` 时，app 启动后会要求运行时输入 AK；带 `--key-file` 时，AK 会进入该 APK，限受控测试使用。需要 debug APK 时才添加 `--debug`。
 
 iOS（需先完成下方「iOS 真机注意事项」的签名配置）：
 
@@ -90,10 +90,10 @@ flutter build ios --release
 带 AK 的 iOS release 目前走 key-file launcher 的 release 模式：
 
 ```bash
-node scripts/run-flutter-demo-with-key-file.mjs /绝对路径/to/key-file -d <device-id> --release
+node scripts/run-flutter-demo-with-key-file.mjs /绝对路径/to/key-file -d <device-id>
 ```
 
-这条命令会通过 `flutter run --release` 重新构建、安装并启动，并非使用已有 `Runner.app`。新版 Flutter 可能报 `expected app not found`（产物实际在 `build/ios/Release-iphoneos/`）；遇到时退回上面的不带 AK `flutter build ios --release` + 下方 `devicectl` 安装流程，并在 app 内运行时输入 AK。
+这条命令默认通过 `flutter run --release` 重新构建、安装并启动，并非使用已有 `Runner.app`。新版 Flutter 可能报 `expected app not found`（产物实际在 `build/ios/Release-iphoneos/`）；遇到时退回上面的不带 AK `flutter build ios --release` + 下方 `devicectl` 安装流程，并在 app 内运行时输入 AK。
 
 ### 4. 安装或启动已有 release 产物
 
@@ -257,9 +257,10 @@ flutter test
 flutter analyze
 flutter build apk --debug
 flutter build apk --release
-# 同时验证有/无 AK 的统一构建入口
+# 统一构建入口默认验证 release；--debug 仅用于调试 APK
 node scripts/build-android-demo.mjs
 node scripts/build-android-demo.mjs --key-file /absolute/path/to/key-file
+node scripts/build-android-demo.mjs --debug
 node --test scripts/*.test.mjs
 node ../../../scripts/verify-catalog.mjs
 ```
