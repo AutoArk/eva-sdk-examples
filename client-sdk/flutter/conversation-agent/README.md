@@ -23,21 +23,13 @@ flutter pub get
 
 ### 不内置 AK：运行时输入
 
-AK 是可选的构建输入。没有本地 AK 时直接构建或运行：
+AK 是可选的构建输入。没有本地 AK 时直接开发运行：
 
 ```bash
-node scripts/build-android-demo.mjs
-# 或直接开发运行
 flutter run -d <device-id>
 ```
 
-生成的 APK 不包含 Gateway AK。app 启动后会显示遮罩输入框；输入 AK 并点击“使用 AK 并开始”后才创建 Agent 和启动语音会话。运行时输入的 AK 只保存在当前 app 进程内，不写文件、不进入事件或诊断信息；stop/restart 会在本次进程中继续使用，彻底关闭 app 后需要重新输入。
-
-release 构建同样可以不带 AK：
-
-```bash
-node scripts/build-android-demo.mjs --release
-```
+生成的 app 不包含 Gateway AK。app 启动后会显示遮罩输入框；输入 AK 并点击“使用 AK 并开始”后才创建 Agent 和启动语音会话。运行时输入的 AK 只保存在当前 app 进程内，不写文件、不进入事件或诊断信息；stop/restart 会在本次进程中继续使用，彻底关闭 app 后需要重新输入。
 
 ### 内置 AK：本地测试
 
@@ -47,23 +39,43 @@ key file 保存在仓库外，至少包含：
 EVA_GATEWAY_API_KEY=<value>
 ```
 
-开发运行时可从 demo 目录启动：
+开发运行时从 demo 目录启动：
 
 ```bash
 node scripts/run-flutter-demo-with-key-file.mjs /absolute/path/to/key-file -d <device-id>
 ```
 
-launcher 只读取声明的变量，不执行 key file 内容，也不打印 AK。它把所需值写入权限为 `0600` 的临时 JSON，作为本次 `flutter run` 的 `--dart-define-from-file` 输入，并在进程退出后删除。
+launcher 只读取声明的变量，不执行 key file 内容，也不打印 AK。它把所需值写入权限为 `0600` 的临时 JSON，作为本次 `flutter run` 的 `--dart-define-from-file` 输入，并在进程退出后删除。AK 会作为 Dart compile-time define 进入构建产物；即使是 release 产物，内置 AK 也可能被逆向提取，因此这种模式只适合受控的本地/内部测试，不能作为凭证保密或公开分发方案。
 
-需要生成安装后无需输入 AK 的测试 APK：
+### release 构建（对外演示）
+
+对外演示建议构建 **release** 版：debug 构建只能由 `flutter run` 启动，用户点图标打不开；release 构建需要几分钟，是正常编译耗时，请耐心等待。
+
+Android：
 
 ```bash
-node scripts/build-android-demo.mjs --key-file /absolute/path/to/key-file
-# release 测试 APK
-node scripts/build-android-demo.mjs --release --key-file /absolute/path/to/key-file
+node scripts/build-android-demo.mjs --release                                  # 不带 AK
+node scripts/build-android-demo.mjs --release --key-file /绝对路径/to/key-file # 带 AK
 ```
 
-build launcher 使用同样的安全解析与临时 define 文件；AK 会作为 Dart compile-time define 进入 APK。即使是 release APK，内置 AK 也可能被逆向提取，因此这种模式只适合受控的本地/内部测试，不能作为凭证保密或公开分发方案。
+产物在 `build/app/outputs/flutter-apk/app-release.apk`，用 `adb install -r` 安装到设备。
+
+iOS（需先完成下方「iOS 真机注意事项」的签名配置）：
+
+```bash
+flutter build ios --release
+```
+
+产物在 `build/ios/iphoneos/Runner.app`（不带 AK，启动后输入 AK）。安装到已连接的真机：
+
+```bash
+xcrun devicectl device install app --device <device-id> build/ios/iphoneos/Runner.app
+xcrun devicectl device process launch --device <device-id> ai.autoark.eva.examples.evaFlutterConversationAgent
+```
+
+带 AK 的 iOS release 走 key-file launcher 的 release 模式：`node scripts/run-flutter-demo-with-key-file.mjs /绝对路径/to/key-file -d <device-id> --release`。新版 Flutter 的 `flutter run --release` 可能报 "expected app not found"（产物实际在 `build/ios/Release-iphoneos/`），遇到时退回上面的 `flutter build ios --release` + devicectl 安装。
+
+### 运行时行为与错误可见性
 
 app 启动时会申请麦克风与相机权限（Android 对应 `RECORD_AUDIO` 和 `CAMERA`，iOS 在系统弹窗中授权）。麦克风、TTS 默认开启，camera 默认关闭，可在页面中切换。可以说"现在几点"触发 `get_current_time`，或要求按指定称呼和语气问候以触发 `format_greeting`；Command 和 Emotion 结果会出现在 event timeline。
 
@@ -82,6 +94,42 @@ traceId: trace-safe-401
 `traceId` 仅用于关联 Gateway 日志；机器分类仍应使用 `source`、`provider` 与 `statusCode`。Demo 不显示原始 Gateway 响应、AK、Bearer token 或原生堆栈。
 
 验证结束后应卸载带 AK 的测试 app 并清理本地 build 输出。无论使用哪种模式，都不要把 AK 写进源码、manifest、lockfile 或 Git。
+
+## iOS 真机注意事项
+
+iOS 真机特有的注意事项集中放在这里：签名、首次安装与分发。
+
+**签名**
+
+iOS 真机构建必须经过代码签名，签名用的证书与 Team 归属于每个开发者自己的 Apple 账号。**证书和签名配置不会、也不应提交到仓库或与他人共享**：仓库默认不内置 `DEVELOPMENT_TEAM`，每个开发者用自己的账号即可在本机真机上构建运行。
+
+前置：Mac 装有 Xcode，并已用你的 Apple ID 登录 Xcode（`Xcode → Settings → Accounts`）。
+
+自动签名（推荐）：
+
+1. 用 Xcode 打开 `ios/Runner.xcworkspace`；
+2. 选中 **Runner** target → **Signing & Capabilities**；
+3. 勾选 **Automatically manage signing**，Team 下拉选择你的团队（免费个人团队即可，仅用于跑自己的设备）。
+
+命令行方式：编辑 `ios/Runner.xcodeproj/project.pbxproj`，在 Runner 的 Debug / Release / Profile 三个构建配置里设置：
+
+```xcconfig
+DEVELOPMENT_TEAM = <你的Team ID>;
+```
+
+Team ID 取开发者证书 subject 的 **OU 字段**（证书 CN 显示名括号里的值不一定是 Team ID，以 OU 为准）：
+
+```bash
+security find-certificate -c "Apple Development: <你的Apple ID邮箱>" -p | openssl x509 -noout -subject
+```
+
+**首次安装**
+
+如提示"未受信任的开发者"，到 `设置 → 通用 → VPN 与设备管理` 信任该开发者后再打开。免费个人团队的 profile 约 7 天过期，Xcode 重新构建时自动重新生成，无需手动处理。
+
+**分发给他人**
+
+免费个人团队**只能**运行在自己已注册的设备（上限 3 台），**无法分发**给其他用户。需要把 app 给外部用户安装时，请升级付费 Apple Developer Program（$99/年），通过 **TestFlight**（外部测试最多 10000 人，无需收集设备 UDID）或 **Ad Hoc**（最多 100 台，需收集对方 UDID）分发。
 
 ## SDK 接入主路径
 
