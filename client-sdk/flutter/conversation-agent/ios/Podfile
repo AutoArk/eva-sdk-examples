@@ -1,6 +1,3 @@
-require 'json'
-require 'uri'
-
 platform :ios, '15.1'
 
 generated_xcconfig = File.read(File.join(__dir__, 'Flutter', 'Generated.xcconfig'))
@@ -9,17 +6,9 @@ abort 'FLUTTER_ROOT is missing from ios/Flutter/Generated.xcconfig' unless flutt
 flutter_root = File.expand_path(flutter_root)
 require File.expand_path('packages/flutter_tools/bin/podhelper', flutter_root)
 
-package_config_path = File.expand_path('../.dart_tool/package_config.json', __dir__)
-package_config = JSON.parse(File.read(package_config_path))
-sdk_package = package_config.fetch('packages').find { |item| item['name'] == 'autoark_eva_client_sdk' }
-abort 'autoark_eva_client_sdk is missing from .dart_tool/package_config.json' unless sdk_package
-sdk_root_uri = sdk_package.fetch('rootUri')
-sdk_root = URI.decode_www_form_component(sdk_root_uri.sub(%r{^file://}, ''))
-
 target 'Runner' do
   use_frameworks! :linkage => :static
   flutter_install_all_ios_pods File.dirname(File.realpath(__FILE__))
-  pod 'autoark_eva_client_sdk', :path => File.join(sdk_root, 'ios')
 end
 
 post_install do |installer|
@@ -27,7 +16,6 @@ post_install do |installer|
     flutter_additional_ios_build_settings(target)
     target.build_configurations.each do |config|
       config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '15.1'
-      config.build_settings['EXCLUDED_ARCHS[sdk=iphonesimulator*]'] = 'x86_64'
     end
   end
 end

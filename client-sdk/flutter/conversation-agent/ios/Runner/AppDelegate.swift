@@ -1,7 +1,6 @@
 import Flutter
 import UIKit
 import AVFoundation
-import autoark_eva_client_sdk
 
 @main
 @objc class AppDelegate: FlutterAppDelegate, FlutterImplicitEngineDelegate {
@@ -13,9 +12,6 @@ import autoark_eva_client_sdk
   }
 
   func didInitializeImplicitFlutterEngine(_ engineBridge: FlutterImplicitEngineBridge) {
-    if let registrar = engineBridge.pluginRegistry.registrar(forPlugin: "AutoarkEvaClientSdkPlugin") {
-      AutoarkEvaClientSdkPlugin.register(with: registrar)
-    }
     GeneratedPluginRegistrant.register(with: engineBridge.pluginRegistry)
     if let registrar = engineBridge.pluginRegistry.registrar(forPlugin: "EVADemoPermissionChannel") {
       installPermissionChannel(messenger: registrar.messenger())
