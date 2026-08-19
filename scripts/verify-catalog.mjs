@@ -156,7 +156,7 @@ for (const example of catalog.examples) {
       .split("\n")
       .find((line) => line.startsWith("|") && line.includes(demoLink));
     assert(catalogRow !== undefined, `${example.id}: repository README catalog row is missing`);
-    const registryUrl = `https://pub.dev/packages/${example.sdk.package}/versions/${dependency}`;
+    const registryUrl = `https://pub.dev/packages/${example.sdk.package}`;
     const sdkPackageLink = "[\u0060" + example.sdk.package + "\u0060](" + registryUrl + ")";
     assert(
       catalogRow.includes(`| ${sdkPackageLink} |`),
