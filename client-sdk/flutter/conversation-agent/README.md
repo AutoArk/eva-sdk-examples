@@ -231,7 +231,7 @@ node ../../../scripts/verify-catalog.mjs
 
 ## SDK 兼容性
 
-精确版本由 `pubspec.yaml` 和 `pubspec.lock` 共同锁定。升级时修改 exact version、重新运行 `flutter pub get`，并完成上述自动检查和目标设备回归。`autoark_eva_client_sdk` 同时支持 Android 与 iOS；Android 最低 API 24，iOS 最低 15.1，支持 arm64 真机与 Apple Silicon arm64 Simulator。
+精确版本由 `pubspec.yaml` 和 `pubspec.lock` 共同锁定。升级时修改 exact version、重新运行 `flutter pub get`，并完成上述自动检查和目标设备回归；也可用根目录统一入口 `node scripts/update-sdk-versions.mjs --flutter <version>` 更新。`autoark_eva_client_sdk` 同时支持 Android 与 iOS；Android 最低 API 24，iOS 最低 15.1，支持 arm64 真机与 Apple Silicon arm64 Simulator。
 
 ## License
 

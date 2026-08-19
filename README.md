@@ -44,7 +44,7 @@ uv run \
 catalog 一致性检查，任一步失败都会恢复本轮文件修改：
 
 ```bash
-node scripts/update-sdk-versions.mjs --ts <version> --python <version>
+node scripts/update-sdk-versions.mjs --ts <version> --python <version> --flutter <version>
 ```
 
 ## License
