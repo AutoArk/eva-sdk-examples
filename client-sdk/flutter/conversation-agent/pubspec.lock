@@ -13,10 +13,10 @@ packages:
     dependency: "direct main"
     description:
       name: autoark_eva_client_sdk
-      sha256: "6c1533a29c7085776a812cf214e368159cdf4aceaac52cee2234107d7bec2d98"
+      sha256: fd385faba6d85f221cc19ce2050d40a97123e8af1de6994dfecdc02adb88f18c
       url: "https://pub.dev"
     source: hosted
-    version: "0.1.0"
+    version: "1.0.0"
   boolean_selector:
     dependency: transitive
     description:
