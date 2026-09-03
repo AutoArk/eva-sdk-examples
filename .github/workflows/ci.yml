@@ -1,0 +1,107 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  catalog-and-scripts:
+    name: Catalog & Script Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Verify catalog
+        run: node scripts/verify-catalog.mjs
+
+      - name: Run script unit tests
+        run: node --test scripts/*.test.mjs
+
+  ts-demos:
+    name: TypeScript Demos
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: |
+            client-sdk/ts/browser-conversation-agent/package-lock.json
+            client-sdk/ts/electron-conversation-agent/package-lock.json
+
+      - name: Test browser key-file runner
+        run: node --test client-sdk/ts/browser-conversation-agent/scripts/*.test.mjs
+
+      - name: Test electron key-file runner
+        run: node --test client-sdk/ts/electron-conversation-agent/scripts/*.test.mjs
+
+      - name: Install browser demo dependencies
+        run: npm ci --prefix client-sdk/ts/browser-conversation-agent
+
+      - name: Build browser demo
+        run: npm run build --prefix client-sdk/ts/browser-conversation-agent
+
+      - name: Install electron demo dependencies
+        run: npm ci --prefix client-sdk/ts/electron-conversation-agent
+
+      - name: Build electron demo
+        run: npm run build --prefix client-sdk/ts/electron-conversation-agent
+
+  flutter-scripts:
+    name: Flutter Runner Scripts
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Test flutter runner scripts
+        run: node --test client-sdk/flutter/conversation-agent/scripts/*.test.mjs
+
+  python-demo:
+    name: Python Demo (Voice Agent)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install system audio dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y portaudio19-dev
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      - name: Run Python pytest
+        run: uv run --directory client-sdk/python/voice-dialogue-agent --frozen python -m pytest
