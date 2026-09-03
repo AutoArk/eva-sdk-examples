@@ -10,43 +10,28 @@ const String demoSystemPrompt = '''
 ''';
 
 final class DemoConfiguration {
-  const DemoConfiguration({
-    required this.apiKey,
-    this.asrModel = 'ark-asr-plus',
-    this.llmModel = 'volcengine-doubao-seed-2.0-mini',
-    this.ttsModel = 'ark-tts-flash',
-  });
+  const DemoConfiguration({required this.apiKey});
 
   factory DemoConfiguration.fromEnvironment() => const DemoConfiguration(
     apiKey: String.fromEnvironment('EVA_GATEWAY_API_KEY'),
-    llmModel: String.fromEnvironment(
-      'EVA_GATEWAY_LLM_MODEL',
-      defaultValue: 'volcengine-doubao-seed-2.0-mini',
-    ),
-    ttsModel: String.fromEnvironment(
-      'EVA_GATEWAY_TTS_MODEL',
-      defaultValue: 'ark-tts-flash',
-    ),
   );
 
   final String apiKey;
-  final String asrModel;
-  final String llmModel;
-  final String ttsModel;
 
-  DemoConfiguration withApiKey(String value) => DemoConfiguration(
-    apiKey: value,
-    asrModel: asrModel,
-    llmModel: llmModel,
-    ttsModel: ttsModel,
-  );
+  DemoConfiguration withApiKey(String value) =>
+      DemoConfiguration(apiKey: value);
 
-  bool get isReady =>
-      apiKey.trim().isNotEmpty &&
-      asrModel.trim().isNotEmpty &&
-      llmModel.trim().isNotEmpty &&
-      ttsModel.trim().isNotEmpty;
+  bool get isReady => apiKey.trim().isNotEmpty;
 }
+
+// Gateway model, voice, and sample rate are one compatible set. Change them
+// together in source when switching Gateway deployments.
+const String _gatewayAsrModel = 'ark-asr-plus';
+const int _gatewayAsrSampleRate = 16000;
+const String _gatewayLlmModel = 'volcengine-doubao-seed-2.0-mini';
+const String _gatewayTtsModel = 'ark-tts-flash';
+const String _gatewayTtsVoice = 'zh_en_male_evan';
+const int _gatewayTtsSampleRate = 44100;
 
 /// SDK 接入主路径：把应用配置转换为一个使用 EVA 默认媒体 SPI 实现的 Agent。
 DemoAgentPort createEvaDemoAgent(DemoConfiguration config) {
@@ -56,19 +41,19 @@ DemoAgentPort createEvaDemoAgent(DemoConfiguration config) {
 
 /// Demo 选择的完整 public SDK 配置；UI 不参与配置拼装。
 EvaAgentConfig buildEvaAgentConfig(DemoConfiguration config) => EvaAgentConfig(
-  // 必填：Gateway AK 与 ASR、LLM、TTS model 由接入应用提供。
+  // 必填：Gateway AK 由接入应用提供；model、voice、sampleRate 使用上方配套常量。
   apiKey: config.apiKey,
-  asr: EvaAsrConfig(model: config.asrModel, sampleRate: 16000),
+  asr: EvaAsrConfig(model: _gatewayAsrModel, sampleRate: _gatewayAsrSampleRate),
   llm: EvaLlmConfig(
-    model: config.llmModel,
+    model: _gatewayLlmModel,
     extraParameters: const <String, Object?>{
       'thinking': <String, Object?>{'type': 'disabled'},
     },
   ),
   tts: EvaTtsConfig(
-    model: config.ttsModel,
-    voice: 'zh_en_male_evan',
-    sampleRate: 44100,
+    model: _gatewayTtsModel,
+    voice: _gatewayTtsVoice,
+    sampleRate: _gatewayTtsSampleRate,
   ),
 
   // 默认实现也是普通 SPI 实现：显式构造完整配套 assembly，再通过 transports 注入。

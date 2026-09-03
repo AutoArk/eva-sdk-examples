@@ -296,7 +296,14 @@ final class DemoController extends ChangeNotifier {
     final DemoAgentPort? agent = _agent;
     final String normalized = text.trim();
     if (agent == null || !canInteract || normalized.isEmpty) return;
-    await _runControl(() => agent.submitText(normalized), 'Text send failed');
+    final int generation = _generation;
+    final bool succeeded = await _runControl(
+      () => agent.submitText(normalized),
+      'Text send failed',
+    );
+    if (succeeded && _isCurrent(generation)) {
+      unawaited(_refreshMessagesForGeneration(generation));
+    }
   }
 
   Future<void> setAudioEnabled(bool enabled) async {

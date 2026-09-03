@@ -663,67 +663,128 @@ final class _EventTimelineState extends State<_EventTimeline> {
   }
 }
 
-final class _MessagesView extends StatelessWidget {
+final class _MessagesView extends StatefulWidget {
   const _MessagesView({required this.controller});
 
   final DemoController controller;
 
   @override
-  Widget build(BuildContext context) => Column(
-    children: <Widget>[
-      Expanded(
-        child: controller.messages.isEmpty
-            ? const _ConversationEmptyState()
-            : ListView.separated(
-                padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                itemCount: controller.messages.length,
-                separatorBuilder: (_, _) => const SizedBox(height: 8),
-                itemBuilder: (BuildContext context, int index) {
-                  final EvaConversationMessage message =
-                      controller.messages[index];
-                  final bool isUser = message.role.name == 'user';
-                  final String roleLabel = isUser
-                      ? 'USER'
-                      : message.role.name == 'assistant'
-                      ? 'EVA'
-                      : message.role.name.toUpperCase();
-                  return Align(
-                    alignment: isUser
-                        ? Alignment.centerRight
-                        : Alignment.centerLeft,
-                    child: FractionallySizedBox(
-                      widthFactor: 0.84,
-                      child: DecoratedBox(
-                        decoration: BoxDecoration(
-                          color: isUser
-                              ? Theme.of(context).colorScheme.primaryContainer
-                              : Theme.of(
-                                  context,
-                                ).colorScheme.surfaceContainerHigh,
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        child: Padding(
-                          padding: const EdgeInsets.all(12),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: <Widget>[
-                              Text(
-                                roleLabel,
-                                style: Theme.of(context).textTheme.labelSmall,
+  State<_MessagesView> createState() => _MessagesViewState();
+}
+
+final class _MessagesViewState extends State<_MessagesView> {
+  late final ScrollController _scrollController;
+  int _lastMessageCount = 0;
+  String _lastTailContent = '';
+  bool _followTail = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController = ScrollController();
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _scheduleTailScroll(List<EvaConversationMessage> messages) {
+    final int messageCount = messages.length;
+    final String tailContent = messages.isNotEmpty ? messages.last.content : '';
+    if (messageCount == 0) {
+      _lastMessageCount = 0;
+      _lastTailContent = '';
+      _followTail = true;
+      return;
+    }
+    final bool grew =
+        messageCount > _lastMessageCount || tailContent != _lastTailContent;
+    _lastMessageCount = messageCount;
+    _lastTailContent = tailContent;
+    if (!grew || !_followTail) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || !_scrollController.hasClients || !_followTail) return;
+      final double target = _scrollController.position.maxScrollExtent;
+      if ((_scrollController.offset - target).abs() < 1) return;
+      _scrollController.animateTo(
+        target,
+        duration: const Duration(milliseconds: 180),
+        curve: Curves.easeOut,
+      );
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final List<EvaConversationMessage> messages = widget.controller.messages;
+    _scheduleTailScroll(messages);
+    return Column(
+      children: <Widget>[
+        Expanded(
+          child: messages.isEmpty
+              ? const _ConversationEmptyState()
+              : NotificationListener<UserScrollNotification>(
+                  onNotification: (UserScrollNotification notification) {
+                    if (notification.metrics.axis == Axis.vertical) {
+                      _followTail = notification.metrics.extentAfter < 48;
+                    }
+                    return false;
+                  },
+                  child: ListView.separated(
+                    key: const Key('message-list'),
+                    controller: _scrollController,
+                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                    itemCount: messages.length,
+                    separatorBuilder: (_, _) => const SizedBox(height: 8),
+                    itemBuilder: (BuildContext context, int index) {
+                      final EvaConversationMessage message = messages[index];
+                      final bool isUser = message.role.name == 'user';
+                      final String roleLabel = isUser
+                          ? 'USER'
+                          : message.role.name == 'assistant'
+                          ? 'EVA'
+                          : message.role.name.toUpperCase();
+                      return Align(
+                        alignment: isUser
+                            ? Alignment.centerRight
+                            : Alignment.centerLeft,
+                        child: FractionallySizedBox(
+                          widthFactor: 0.84,
+                          child: DecoratedBox(
+                            decoration: BoxDecoration(
+                              color: isUser
+                                  ? Theme.of(context).colorScheme.primaryContainer
+                                  : Theme.of(
+                                      context,
+                                    ).colorScheme.surfaceContainerHigh,
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Padding(
+                              padding: const EdgeInsets.all(12),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: <Widget>[
+                                  Text(
+                                    roleLabel,
+                                    style: Theme.of(context).textTheme.labelSmall,
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(message.content),
+                                ],
                               ),
-                              const SizedBox(height: 4),
-                              Text(message.content),
-                            ],
+                            ),
                           ),
                         ),
-                      ),
-                    ),
-                  );
-                },
-              ),
-      ),
-    ],
-  );
+                      );
+                    },
+                  ),
+                ),
+        ),
+      ],
+    );
+  }
 }
 
 final class _Composer extends StatelessWidget {

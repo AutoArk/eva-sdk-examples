@@ -564,6 +564,74 @@ void main() {
     expect(find.text('EVA'), findsNWidgets(2));
   });
 
+  testWidgets('messages view automatically scrolls down to newest message', (
+    WidgetTester tester,
+  ) async {
+    final _FakeAgentFactory factory = _FakeAgentFactory();
+    final DemoController controller = DemoController(
+      configuration: readyConfiguration,
+      agentFactory: factory.create,
+    );
+
+    await tester.pumpWidget(
+      EvaDemoApp(
+        configuration: controller.configuration,
+        controller: controller,
+      ),
+    );
+    await tester.tap(find.byKey(const Key('start-button')));
+    await tester.pumpAndSettle();
+    final _FakeAgent agent = factory.agents.single;
+
+    final List<EvaConversationMessage> messages = <EvaConversationMessage>[];
+    for (int i = 0; i < 20; i++) {
+      messages.add(
+        _message(
+          role: i.isEven ? 'user' : 'assistant',
+          content: 'Message #$i: This is a test bubble in the conversation list.',
+        ),
+      );
+    }
+    agent.messages = messages;
+    agent.emit(_event(type: EvaAgentEventType.replyFinal));
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('Message #19'), findsOneWidget);
+
+    // Scroll up to read history
+    await tester.drag(find.byKey(const Key('message-list')), const Offset(0, 500));
+    await tester.pumpAndSettle();
+
+    // Add another message while scrolled up
+    messages.add(
+      _message(
+        role: 'assistant',
+        content: 'Message #20: Newly added while user was reading history.',
+      ),
+    );
+    agent.emit(_event(type: EvaAgentEventType.replyFinal));
+    await tester.pumpAndSettle();
+
+    // Since user scrolled up, Message #20 should not be force-scrolled into view immediately
+    expect(find.textContaining('Message #20'), findsNothing);
+
+    // User scrolls back down to bottom
+    await tester.drag(find.byKey(const Key('message-list')), const Offset(0, -600));
+    await tester.pumpAndSettle();
+
+    // Now add another message, auto-scroll resumes
+    messages.add(
+      _message(
+        role: 'user',
+        content: 'Message #21: Latest message after resuming tail.',
+      ),
+    );
+    agent.emit(_event(type: EvaAgentEventType.replyFinal));
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('Message #21'), findsOneWidget);
+  });
+
   testWidgets('session timer starts, freezes on stop and resets on restart', (
     WidgetTester tester,
   ) async {

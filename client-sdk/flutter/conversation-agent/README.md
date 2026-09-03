@@ -172,47 +172,8 @@ security find-certificate -c "Apple Development: <你的Apple ID邮箱>" -p | op
 5. 通过 `createDefaultEvaMediaTransports` 显式构造 SDK 默认 SPI 实现并注入 `transports`；
 6. 通过 `EvaAgent` 的 `events`、`start()`、media toggles、`submitText()`、`getMessages()` 和 `stop()` 驱动产品 UI。
 
-核心配置形状如下，完整可运行代码以 `sdk_usage.dart` 为准：
-
-```dart
-final EvaAgent agent = EvaAgent.create(
-  EvaAgentConfig(
-    apiKey: config.apiKey,
-    asr: EvaAsrConfig(model: config.asrModel, sampleRate: 16000),
-    llm: EvaLlmConfig(
-      model: config.llmModel,
-      extraParameters: const <String, Object?>{
-        'thinking': <String, Object?>{'type': 'disabled'},
-      },
-    ),
-    tts: EvaTtsConfig(
-      model: config.ttsModel,
-      voice: 'zh_en_male_evan',
-      sampleRate: 44100,
-    ),
-    transports: createDefaultEvaMediaTransports(
-      camera: const EvaDefaultCameraOptions(
-        maxLongEdge: 640,
-        jpegQuality: 70,
-      ),
-    ),
-    vad: const EvaVadConfig(
-      sensitivity: 0.7,
-      silenceThresholdMs: 400,
-    ),
-    history: const EvaHistoryConfig(maxTurns: 10),
-    camera: const EvaCameraConfig(captureTimeoutMs: 1500),
-    bargeIn: const EvaBargeInConfig(initialPlaybackGuardMs: 3000),
-    systemPrompt: demoSystemPrompt,
-    greeting: const EvaStaticGreeting('你好，我是 EVA，很高兴认识你。'),
-    emotion: EvaEmotionConfig(enabled: true),
-    commands: EvaCommandsConfig(
-      registrations: demoCommands,
-      maxCallsPerTurn: 3,
-    ),
-  ),
-);
-```
+完整可运行的 public 配置以 [`lib/sdk_usage.dart`](lib/sdk_usage.dart) 为准；Gateway 的 model、
+voice、sampleRate 在源码中作为一组配套常量维护，`fromEnvironment()` 只读取 Gateway AK。
 
 `agent.start()` 不会自动打开媒体。Demo 在 start 后按当前页面开关调用 `setAudioInputEnabled()`、`setCameraEnabled()` 与 `setTtsEnabled()`；`stop()` 负责收束当前 session。重启会话会创建新的 Agent，不复用已经 stop 的实例。
 

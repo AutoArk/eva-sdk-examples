@@ -4,18 +4,13 @@ import 'package:flutter_test/flutter_test.dart';
 void main() {
   test('concentrates the practical public SDK configuration', () {
     final config = buildEvaAgentConfig(
-      const DemoConfiguration(
-        apiKey: 'configuration-test-secret',
-        asrModel: 'demo-asr',
-        llmModel: 'demo-llm',
-        ttsModel: 'demo-tts',
-      ),
+      const DemoConfiguration(apiKey: 'configuration-test-secret'),
     );
 
-    expect(config.asr.model, 'demo-asr');
+    expect(config.asr.model, 'ark-asr-plus');
     expect(config.asr.sampleRate, 16000);
-    expect(config.llm.model, 'demo-llm');
-    expect(config.tts.model, 'demo-tts');
+    expect(config.llm.model, 'volcengine-doubao-seed-2.0-mini');
+    expect(config.tts.model, 'ark-tts-flash');
     expect(config.tts.voice, 'zh_en_male_evan');
     expect(config.tts.sampleRate, 44100);
     expect(config.vad.sensitivity, 0.7);
@@ -34,5 +29,12 @@ void main() {
     expect(config.commands?.registrations, hasLength(2));
     expect(config.commands?.maxCallsPerTurn, 3);
     expect(config.metadata, <String, Object?>{'surface': 'flutter-demo'});
+  });
+
+  test('environment configuration only supplies the Gateway AK', () {
+    const config = DemoConfiguration(apiKey: 'configuration-test-secret');
+    expect(config.isReady, isTrue);
+    expect(config.withApiKey('next-key').apiKey, 'next-key');
+    expect(const DemoConfiguration(apiKey: '').isReady, isFalse);
   });
 }
