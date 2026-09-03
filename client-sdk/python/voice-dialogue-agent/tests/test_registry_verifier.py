@@ -7,16 +7,7 @@ from pathlib import Path
 
 import pytest
 
-SCRIPT = (
-    Path(__file__).parents[4]
-    / ".agents/skills/verify-eva-python-demo-registry/scripts/verify_registry_install.py"
-)
-if not SCRIPT.is_file():
-    pytest.skip(
-        f"Optional agent skill verifier script not present: {SCRIPT}",
-        allow_module_level=True,
-    )
-
+SCRIPT = Path(__file__).resolve().parents[1] / "scripts/verify_registry_install.py"
 SPEC = importlib.util.spec_from_file_location("verify_registry_install", SCRIPT)
 assert SPEC is not None and SPEC.loader is not None
 verifier = importlib.util.module_from_spec(SPEC)
