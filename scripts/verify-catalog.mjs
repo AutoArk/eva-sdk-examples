@@ -165,6 +165,21 @@ for (const example of catalog.examples) {
     continue;
   }
 
+  if (example.sdk.ecosystem === "cmake") {
+    assert(example.language === "cpp" && example.sdk.package === "EvaClient", example.id + ": expected C++ EvaClient package");
+    assert(example.status === "dev", example.id + ": C++ public Release installation has not been verified");
+    for (const file of ["CMakeLists.txt", "src/main.cpp", "src/sdk_usage.cpp", "src/sdk_usage.hpp", "src/commands.hpp", "Info.plist", "scripts/run-with-key-file.mjs", "scripts/use-local-sdk.mjs", ".gitignore"]) await access(join(directory, file));
+    const cmake = await readFile(join(directory, "CMakeLists.txt"), "utf8");
+    const requirement = /find_package\(EvaClient (\d+\.\d+\.\d+) EXACT CONFIG REQUIRED\)/.exec(cmake);
+    assert(requirement, example.id + ": CMake must require an exact installed SDK version");
+    recordSdkVersion(example.sdk.package, requirement[1], example.id);
+    assert(!/FetchContent|ExternalProject|add_subdirectory|\/Users\/|\/private\/tmp\//.test(cmake), example.id + ": CMake must not embed SDK sources or a developer installation");
+    const ignore = await readFile(join(directory, ".gitignore"), "utf8");
+    assert(ignore.includes("/build*/"), example.id + ": local build override must be ignored");
+    assert(repositoryReadme.includes("(" + example.path + "/)"), example.id + ": README catalog link missing");
+    continue;
+  }
+
   if (example.sdk.ecosystem !== "npm") {
     throw new Error(`${example.id}: unsupported SDK ecosystem ${example.sdk.ecosystem}`);
   }

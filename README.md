@@ -15,6 +15,8 @@
 | Client SDK | Python | [`autoark-eva-client-sdk`](https://pypi.org/project/autoark-eva-client-sdk/) | [`voice-dialogue-agent`](client-sdk/python/voice-dialogue-agent/) | 终端语音对话、native AEC、Emotion、Command，以及可选 camera 图片问答；当前消费 PyPI 正式版 |
 | Client SDK | Flutter | [`autoark_eva_client_sdk`](https://pub.dev/packages/autoark_eva_client_sdk) | [`conversation-agent`](client-sdk/flutter/conversation-agent/) | Flutter mobile 共用 UI；消费 pub.dev 正式版，支持 Android 与 iOS |
 
+| Client SDK | C++ | `EvaClient`（预编译 CMake 包，待正式 Release） | [`voice-dialogue-agent`](client-sdk/cpp/voice-dialogue-agent/) | 独立终端语音对话、native AEC、Emotion、Command 与可选 camera；当前为候选联调 |
+
 机器可读目录见 [`examples.json`](examples.json)。表格链接到每个 demo 使用的 SDK package；精确版本以各 demo 的 package manifest 和 lockfile 为事实源。目录中的 `status: "release"` 表示 demo 已正式对外发布，`status: "dev"` 表示仍在开发。`verify-catalog.mjs` 会校验表格、目录与 manifest 保持一致。
 
 ## 目录约定

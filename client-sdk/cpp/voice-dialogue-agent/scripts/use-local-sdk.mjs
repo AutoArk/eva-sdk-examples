@@ -1,0 +1,18 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import {fileURLToPath} from 'node:url';
+import {spawnSync} from 'node:child_process';
+const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
+const [candidate]=process.argv.slice(2);
+if(!candidate || !path.isAbsolute(candidate) || process.argv.length!==3)throw Error('usage: node scripts/use-local-sdk.mjs /absolute/installed-sdk');
+const manifest=JSON.parse(fs.readFileSync(path.join(candidate,'manifest.json'),'utf8'));
+if(manifest.sdkVersion!=='0.1.0' || manifest.profile!=='public')throw Error('local SDK must be public candidate version 0.1.0');
+const platform=process.platform==='darwin'?'macos-arm64':process.platform==='linux'?'linux-arm64':null;
+if(process.arch!=='arm64' || manifest.platform!==platform)throw Error('local SDK platform mismatch');
+const config=path.join(candidate,'lib/cmake/EvaClient');
+fs.accessSync(path.join(config,'EvaClientConfig.cmake'));
+const args=['-S',root,'-B',path.join(root,'build-local'),'-DCMAKE_BUILD_TYPE=Release',`-DEvaClient_DIR=${config}`];
+if(platform==='macos-arm64')args.push(`-DCMAKE_OSX_DEPLOYMENT_TARGET=${manifest.deploymentTarget.macos}`);
+const result=spawnSync(process.env.CMAKE??'cmake',args,{stdio:'inherit'});
+if(result.error || result.status!==0)process.exit(result.status??1);
+console.log('Local candidate configured in ignored build-local; build with cmake --build build-local.');

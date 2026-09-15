@@ -52,6 +52,19 @@
         "package": "autoark_eva_client_sdk"
       },
       "status": "release"
+    },
+    {
+      "id": "client-sdk-cpp-voice-dialogue-agent",
+      "title": "EVA Client SDK · C++ Voice Dialogue Agent",
+      "sdkFamily": "client-sdk",
+      "language": "cpp",
+      "platform": "terminal",
+      "path": "client-sdk/cpp/voice-dialogue-agent",
+      "sdk": {
+        "ecosystem": "cmake",
+        "package": "EvaClient"
+      },
+      "status": "dev"
     }
   ]
 }

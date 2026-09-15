@@ -94,7 +94,7 @@ uv run --directory "$DEMO_DIR" --frozen python run_with_key_file.py /absolute/pa
 ```
 
 启用后，默认 camera 在每个语音 turn 至多抓一张当前图片；事件只打印 MIME、尺寸、字节数和耗时，
-不保存图片。demo 还注册了两个本地无副作用 command：说“现在几点”触发 `get_current_time`；说
+不保存图片。demo 显式向 LLM 提供最近 10 轮完整问答作为上下文。demo 还注册了两个本地无副作用 command：说“现在几点”触发 `get_current_time`；说
 “把 25 摄氏度换算成华氏度”触发 `convert_temperature`。成功路径会依次打印
 `command.called`、`command.completed`，随后由 TTS 播报结果。
 

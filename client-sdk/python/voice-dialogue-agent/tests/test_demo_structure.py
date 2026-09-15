@@ -14,6 +14,7 @@ def test_core_sdk_usage_is_short_and_keeps_the_public_facade() -> None:
     for expected in (
         "create_eva_voice_dialogue_agent",
         "EvaVoiceDialogueAgentConfig",
+        "HistoryConfig",
         "create_pyaudio_media_transports",
         "NativeAecProcessor",
         "EmotionConfig",
@@ -22,6 +23,7 @@ def test_core_sdk_usage_is_short_and_keeps_the_public_facade() -> None:
     ):
         combined = source + (ROOT / "audio_setup.py").read_text(encoding="utf-8")
         assert expected in combined
+    assert "history=HistoryConfig(max_turns=10)" in source
 
 
 def test_all_demo_modules_compile_and_are_sanitized() -> None:

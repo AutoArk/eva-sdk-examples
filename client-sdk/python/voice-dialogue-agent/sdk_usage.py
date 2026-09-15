@@ -8,6 +8,7 @@ from eva_client_sdk import (
     CameraConfig,
     EmotionConfig,
     EvaVoiceDialogueAgentConfig,
+    HistoryConfig,
     LlmConfig,
     MediaTransports,
     TtsConfig,
@@ -66,6 +67,7 @@ async def start_eva_agent(*, api_key: str, args: Namespace, audio: AudioSelectio
                 initial_playback_guard_ms=args.initial_playback_guard_ms
             ),
             greeting=StaticGreeting(text=GREETING_PROFILES[args.greeting_profile]),
+            history=HistoryConfig(max_turns=10),
             commands=build_demo_commands(),
             emotion=EmotionConfig(enabled=not args.no_emotion),
             camera=CameraConfig() if args.camera else None,
