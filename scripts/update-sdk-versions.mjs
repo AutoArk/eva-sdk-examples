@@ -4,6 +4,7 @@ import { spawnSync } from "node:child_process";
 import { readFile, writeFile } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import {readSdkVersion, versionDeclaration} from '../client-sdk/cpp/voice-dialogue-agent/scripts/sdk-version.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const tsPackage = "@autoark-ai/eva-client-sdk-ts";
@@ -13,17 +14,27 @@ const catalog = JSON.parse(await readFile(join(root, "examples.json"), "utf8"));
 const options = parseArgs(process.argv.slice(2));
 const touched = new Map();
 
-if (options.ts === undefined && options.python === undefined && options.flutter === undefined) {
-  fail("usage: update-sdk-versions.mjs [--ts <version>] [--python <version>] [--flutter <version>]");
+if (Object.keys(options).length === 0) {
+  fail("usage: update-sdk-versions.mjs [--ts <version>] [--python <version>] [--flutter <version>] [--cpp <version>]");
 }
 
 for (const [name, version] of Object.entries(options)) {
+  if (name === 'cpp' && !/^\d+\.\d+\.\d+$/.test(version)) fail('C++ version must be three numeric components without v');
   if (!/^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$/.test(version)) {
     fail(`${name} version must be an exact registry version: ${version}`);
   }
 }
 
 try {
+  if (options.cpp !== undefined) {
+    for (const example of matchingExamples('cmake', 'EvaClient')) {
+      const file = join(root, example.path, 'CMakeLists.txt');
+      await remember(file);
+      const contents = await readFile(file, 'utf8');
+      readSdkVersion(contents);
+      await writeFile(file, contents.replace(versionDeclaration, `set(EVA_SDK_VERSION "${options.cpp}")`));
+    }
+  }
   if (options.ts !== undefined) {
     for (const example of matchingExamples("npm", tsPackage)) {
       const directory = join(root, example.path);
@@ -92,6 +103,7 @@ console.log(
     options.ts && `TypeScript ${options.ts}`,
     options.python && `Python ${options.python}`,
     options.flutter && `Flutter ${options.flutter}`,
+    options.cpp && `C++ ${options.cpp}`,
   ].filter(Boolean).join(", ")}`,
 );
 
@@ -122,7 +134,7 @@ function parseArgs(args) {
   for (let index = 0; index < args.length; index += 2) {
     const key = args[index];
     const value = args[index + 1];
-    if (!['--ts', '--python', '--flutter'].includes(key) || value === undefined) {
+    if (!['--ts', '--python', '--flutter', '--cpp'].includes(key) || value === undefined) {
       fail(`unknown or incomplete argument: ${key ?? "<missing>"}`);
     }
     parsed[key.slice(2)] = value;

@@ -6,10 +6,11 @@ import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
+import { PassThrough } from "node:stream";
+import { launch as launchProcess, parseKeyFile } from "./run-with-key-file.mjs";
 
 const run = promisify(execFile);
 const scripts = dirname(fileURLToPath(import.meta.url));
-const launcher = join(scripts, "run-with-key-file.mjs");
 const localSdk = join(scripts, "use-local-sdk.mjs");
 const node = process.execPath;
 const secret = "synthetic-secret-123";
@@ -40,15 +41,21 @@ process.stdin.on("end", () => {
 async function launch(key, child, exitCode = 0) {
   const keyFile = join(dirname(child), "key.env");
   await writeFile(keyFile, key);
-  try {
-    const result = await run(node, [launcher, keyFile, node, child, String(exitCode)], {
-      env: { ...process.env, UNKNOWN: "parent-value" },
-      maxBuffer: 1024 * 1024,
-    });
-    return { ...result, status: 0 };
-  } catch (error) {
-    return { stdout: error.stdout ?? "", stderr: error.stderr ?? "", status: error.code };
-  }
+  const stdout = new PassThrough();
+  const stderr = new PassThrough();
+  let stdoutText = "";
+  let stderrText = "";
+  stdout.on("data", chunk => { stdoutText += chunk; });
+  stderr.on("data", chunk => { stderrText += chunk; });
+  const result = await launchProcess({
+    keyFile,
+    executable: node,
+    args: [child, String(exitCode)],
+    parentEnvironment: { ...process.env, UNKNOWN: "parent-value" },
+    stdout,
+    stderr,
+  });
+  return { stdout: stdoutText, stderr: stderrText, status: result.code };
 }
 
 test("redacts split stdout/stderr and excludes unknown variables", async () => {
@@ -66,12 +73,11 @@ test("redacts split stdout/stderr and excludes unknown variables", async () => {
 for (const [name, contents] of [
   ["missing key", "UNKNOWN=only-unknown\n"],
   ["duplicate key", "EVA_GATEWAY_API_KEY=one\nEVA_GATEWAY_API_KEY=two\n"],
+  ["unquoted whitespace", "EVA_GATEWAY_API_KEY=one two\n"],
+  ["mismatched quotes", "EVA_GATEWAY_API_KEY='one\n"],
 ]) {
-  test(`${name} is rejected`, async () => {
-    const { child } = await fixture();
-    const result = await launch(contents, child);
-    assert.equal(result.status, 1);
-    assert.match(result.stderr, /exactly one valid EVA_GATEWAY_API_KEY/);
+  test(`${name} is rejected`, () => {
+    assert.throws(() => parseKeyFile(contents));
   });
 }
 
@@ -94,6 +100,7 @@ test("rejects a mismatched local SDK before CMake", async () => {
     error => ({ status: error.code, stderr: error.stderr ?? "" }),
   );
   assert.equal(result.status, 1);
-  assert.match(result.stderr, /local SDK must be public candidate version 0\.1\.0/);
+  const {sdkVersion} = await import('./sdk-version.mjs');
+  assert.ok(result.stderr.includes(`local SDK must be public candidate version ${sdkVersion()}`));
   assert.equal(await readFile(join(scripts, "../CMakeLists.txt"), "utf8"), cmakeBefore);
 });

@@ -167,15 +167,43 @@ for (const example of catalog.examples) {
 
   if (example.sdk.ecosystem === "cmake") {
     assert(example.language === "cpp" && example.sdk.package === "EvaClient", example.id + ": expected C++ EvaClient package");
-    assert(example.status === "dev", example.id + ": C++ public Release installation has not been verified");
-    for (const file of ["CMakeLists.txt", "src/main.cpp", "src/sdk_usage.cpp", "src/sdk_usage.hpp", "src/commands.hpp", "Info.plist", "scripts/run-with-key-file.mjs", "scripts/use-local-sdk.mjs", ".gitignore"]) await access(join(directory, file));
+    assert(example.status === "release", example.id + ": C++ consumes a pinned public Release");
+    for (const file of [
+      "README.md",
+      "CMakeLists.txt",
+      "Info.plist",
+      "src/main.cpp",
+      "src/options.cpp",
+      "src/options.hpp",
+      "src/sdk_usage.cpp",
+      "src/sdk_usage.hpp",
+      "src/commands.cpp",
+      "src/commands.hpp",
+      "src/event_output.cpp",
+      "src/event_output.hpp",
+      "scripts/check-env.mjs",
+      "scripts/check-env.test.mjs",
+      "scripts/run-with-key-file.mjs",
+      "scripts/run-with-key-file.test.mjs",
+      "scripts/use-local-sdk.mjs",
+      "scripts/prepare-sdk.mjs",
+      "scripts/prepare-sdk.test.mjs",
+      "scripts/device-config.mjs",
+      ".gitignore",
+    ]) await access(join(directory, file));
     const cmake = await readFile(join(directory, "CMakeLists.txt"), "utf8");
-    const requirement = /find_package\(EvaClient (\d+\.\d+\.\d+) EXACT CONFIG REQUIRED\)/.exec(cmake);
-    assert(requirement, example.id + ": CMake must require an exact installed SDK version");
-    recordSdkVersion(example.sdk.package, requirement[1], example.id);
+    const {readSdkVersion} = await import('../client-sdk/cpp/voice-dialogue-agent/scripts/sdk-version.mjs');
+    const version = readSdkVersion(cmake);
+    assert(cmake.includes('find_package(EvaClient ${EVA_REQUIRED_SDK_VERSION} EXACT CONFIG REQUIRED)'), example.id + ': CMake must require the exact effective SDK version');
+    recordSdkVersion(example.sdk.package, version, example.id);
     assert(!/FetchContent|ExternalProject|add_subdirectory|\/Users\/|\/private\/tmp\//.test(cmake), example.id + ": CMake must not embed SDK sources or a developer installation");
     const ignore = await readFile(join(directory, ".gitignore"), "utf8");
     assert(ignore.includes("/build*/"), example.id + ": local build override must be ignored");
+    const launcher = await readFile(join(directory, "scripts/run-with-key-file.mjs"), "utf8");
+    assert(
+      launcher.includes("await prepareSdk({localSdk, allowLocalVersion})") && launcher.includes("executable, args"),
+      example.id + ": key-file launcher must run the prepared SDK consumer",
+    );
     assert(repositoryReadme.includes("(" + example.path + "/)"), example.id + ": README catalog link missing");
     continue;
   }

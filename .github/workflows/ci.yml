@@ -34,6 +34,9 @@ jobs:
       - name: Run script unit tests
         run: node --test scripts/*.test.mjs
 
+      - name: Test C++ demo helper scripts
+        run: node --test client-sdk/cpp/voice-dialogue-agent/scripts/*.test.mjs
+
   ts-demos:
     name: TypeScript Demos
     runs-on: ubuntu-latest

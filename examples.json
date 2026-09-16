@@ -64,7 +64,7 @@
         "ecosystem": "cmake",
         "package": "EvaClient"
       },
-      "status": "dev"
+      "status": "release"
     }
   ]
 }
