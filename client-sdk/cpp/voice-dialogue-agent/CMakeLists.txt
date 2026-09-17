@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.16)
 project(EvaVoiceDialogueAgent LANGUAGES CXX)
 # Local installed-package selection stays in ignored build directories.
-set(EVA_SDK_VERSION "0.1.0")
+set(EVA_SDK_VERSION "0.1.1")
 set(EVA_REQUIRED_SDK_VERSION "${EVA_SDK_VERSION}")
 if(DEFINED EVA_LOCAL_SDK_VERSION AND NOT EVA_LOCAL_SDK_VERSION STREQUAL "")
   set(EVA_REQUIRED_SDK_VERSION "${EVA_LOCAL_SDK_VERSION}")
