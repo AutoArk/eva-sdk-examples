@@ -14,7 +14,7 @@
 | Client SDK | TypeScript | [`@autoark-ai/eva-client-sdk-ts`](https://www.npmjs.com/package/@autoark-ai/eva-client-sdk-ts) | [`electron-conversation-agent`](client-sdk/ts/electron-conversation-agent/) | Electron 桌面端语音、多轮对话、TTS、麦克风控制，以及可选 Emotion、Command 与摄像头图片问答 |
 | Client SDK | Python | [`autoark-eva-client-sdk`](https://pypi.org/project/autoark-eva-client-sdk/) | [`voice-dialogue-agent`](client-sdk/python/voice-dialogue-agent/) | 终端语音对话、native AEC、Emotion、Command，以及可选 camera 图片问答；当前消费 PyPI 正式版 |
 | Client SDK | Flutter | [`autoark_eva_client_sdk`](https://pub.dev/packages/autoark_eva_client_sdk) | [`conversation-agent`](client-sdk/flutter/conversation-agent/) | Flutter mobile 共用 UI；消费 pub.dev 正式版，支持 Android 与 iOS |
-| Client SDK | C++ | `EvaClient`（GitHub Releases 预编译 CMake 包） | [`voice-dialogue-agent`](client-sdk/cpp/voice-dialogue-agent/) | 固定版本自动下载、校验与构建；终端语音对话、native AEC、Emotion、Command 与可选 camera |
+| Client SDK | C++ | [`eva-cpp-sdk-release`](https://github.com/AutoArk/eva-cpp-sdk-release/releases) | [`voice-dialogue-agent`](client-sdk/cpp/voice-dialogue-agent/) | 固定版本自动下载、校验与构建；终端语音对话、native AEC、Emotion、Command 与可选 camera |
 
 机器可读目录见 [`examples.json`](examples.json)。精确版本以各 demo 的 package manifest 和 lockfile 为事实源；C++ 的默认版本仅在其 `CMakeLists.txt` 的 `EVA_SDK_VERSION` 声明。目录不重复记录版本。目录中的 `status: "release"` 表示 demo 已正式对外发布，`status: "dev"` 表示仍在开发。`verify-catalog.mjs` 校验目录与依赖声明。
 
@@ -42,16 +42,16 @@ uv run \
 
 各 demo 的依赖安装、运行和构建命令见其目录内的 README；根目录不重复维护具体示例的命令。
 
-更新 Client SDK 版本时使用统一入口；脚本会更新所有对应 manifest、重新生成 lockfile，并执行
-catalog 一致性检查，任一步失败都会恢复本轮文件修改：
+更新 Client SDK 版本时使用统一入口；脚本会更新对应语言的版本声明，为使用 lockfile 的生态重新
+生成 lockfile，并执行 catalog 一致性检查。任一步失败都会恢复本轮文件修改：
 
 ```bash
 node scripts/update-sdk-versions.mjs --ts <version> --python <version> --flutter <version> --cpp <version>
 ```
 
-只传需要更新的语言参数即可。C++ 更新唯一的 CMake 默认版本声明，无独立 lockfile；后续启动自动获取
-该版本的公网包。该命令不验证 C++ Release 是否存在，更新后需执行该 example 的准备与构建检查。
-临时试用本地不同版本使用 example 的 `--sdk` 与 `--allow-local-version`，不修改仓库默认版本。
+只传需要更新的语言参数即可。该命令只负责依赖版本声明、lockfile 和 catalog 的一致性，不代替各 SDK
+的发布状态与兼容性验证；更新后按对应 example README 执行安装、准备、构建和运行检查。临时联调
+本地 SDK 时使用各 example 提供的 override 入口，不修改仓库默认版本。
 
 ## License
 
